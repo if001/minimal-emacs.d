@@ -1,6 +1,14 @@
-*
 !README.md
 !early-init.el
 !init.el
 !.github/
 !.LICENSE
+
+recentf
+history
+saveplace
+eln-cache/
+autosave/
+transient/
+straight/
+tree-sitter/
