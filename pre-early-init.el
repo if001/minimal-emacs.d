@@ -1,1 +1,1 @@
-;; (setq debug-on-error t)
+(setq debug-on-error t)

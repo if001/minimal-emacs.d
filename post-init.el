@@ -106,6 +106,8 @@
 
 
 ;;; ------------- theme -------------------
+(setq start-time (current-time))
+
 (use-package ef-themes
   :ensure t
   :config
@@ -146,6 +148,8 @@
            :mode-line-inactive vertical-border))
 
   (spacious-padding-mode +1))
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "theme: %.3f" elapsed))
 ;;; ------------- theme -------------------
 
 
@@ -153,12 +157,12 @@
 
 
 ;;; ------------- tab --------------------
+(setq package-start-time (current-time))
 (use-package centaur-tabs
   :ensure t
   :init
   (centaur-tabs-mode t) ;; グローバルにCentaur Tabsを有効にする
   :config
-  (centaur-tabs-mode t)
   (defun centaur-tabs-hide-tab (x)
   "Do no to show buffer X in tabs."
   (let ((name (format "%s" x)))
@@ -181,24 +185,29 @@
      )))
   :custom
   ;; (centaur-tabs-style "wave")
+  (centaur-tabs-height 32)
 
   ;; icons
   (centaur-tabs-set-icons t)
-  (centaur-tabs-plain-icons t)
+  ;; (centaur-tabs-plain-icons t)
+  (centaur-tabs-icon-type 'nerd-icons)
 
   ;; To display an underline over the selected tab:
-  (centaur-tabs-set-bar 'under)
+  (centaur-tabs-set-bar 'over)
+  ;; (centaur-tabs-set-bar 'under)
   (x-underline-at-descent-line t)
 
   (centaur-tabs-set-close-button nil)
 
   ;; Customize the modified marker
   (centaur-tabs-set-modified-marker t)
-  (centaur-tabs-modified-marker "*")
+  ;; (centaur-tabs-modified-marker "*")
   :bind
   ("M-[" . centaur-tabs-backward)
   ("M-]" . centaur-tabs-forward)
   )
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "tab: %.3f" elapsed))
 ;;; ------------- tab --------------------
 
 
@@ -218,15 +227,16 @@
   (setq dashboard-items '(
 			  (recents   . 5)
 			  (projects   . 5)
-			  (agenda    . 5)
+			  ;; (agenda    . 5)
 			  (bookmarks . 5)
 			  ;;(error-status . nil)
 			  ))
   (setq dashboard-heading-icons '((recents   . "nf-oct-history")
 				  (projects  . "nf-oct-rocket")
-				  (agenda    . "nf-oct-calendar")
-                                  (bookmarks . "nf-oct-bookmark")
-                                  (registers . "nf-oct-database")
+				  ;; (agenda    . "nf-oct-calendar")
+                  (bookmarks . "nf-oct-bookmark")
+
+                  (registers . "nf-oct-database")
 				  (error-status . "nf-oct-bug")
 				  ))
   )
@@ -318,6 +328,7 @@
 
 
 ;;; ------------- recentf -----------------
+(setq package-start-time (current-time))
 ;; Auto-revert in Emacs is a feature that automatically updates the
 ;; contents of a buffer to reflect changes made to the underlying file
 ;; on disk.
@@ -396,6 +407,8 @@
 
 (setq auto-save-interval 300)
 (setq auto-save-timeout 30)
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "recentf: %.3f" elapsed))
 ;;; ------------- recentf -----------------
 
 
@@ -481,6 +494,7 @@
 
 
 ;;; ------------- Vertico、Consult、Embark -----------------
+(setq package-start-time (current-time))
 ;; Vertico provides a vertical completion interface, making it easier to
 ;; navigate and select from completion candidates (e.g., when `M-x` is pressed).
 (use-package vertico
@@ -592,6 +606,8 @@
 
 ;; isearch のインクリメンタルサーチをより強力に
 (setq search-whitespace-regexp ".*?")
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "vertico consult: %.3f" elapsed))
 ;;; ------------- Vertico、Consult、Embark -----------------
 
 
@@ -717,8 +733,8 @@
 
   :init
   ;; The minor mode can also be automatically activated for a certain modes.
-  (add-hook 'python-mode-hook #'outline-indent-minor-mode)
-  (add-hook 'python-ts-mode-hook #'outline-indent-minor-mode)
+  ;;(add-hook 'python-mode-hook #'outline-indent-minor-mode)
+  ;;(add-hook 'python-ts-mode-hook #'outline-indent-minor-mode)
 
   (add-hook 'yaml-mode-hook #'outline-indent-minor-mode)
   (add-hook 'yaml-ts-mode-hook #'outline-indent-minor-mode))
@@ -753,45 +769,40 @@
 
 
 
-;;; ----- markdown ----------------------------------------
-;; The markdown-mode package provides a major mode for Emacs for syntax
-;; highlighting, editing commands, and preview support for Markdown documents.
-;; It supports core Markdown syntax as well as extensions like GitHub Flavored
-;; Markdown (GFM).
-(use-package markdown-mode
-  :commands (gfm-mode
-             gfm-view-mode
-             markdown-mode
-             markdown-view-mode)
-  :mode (("\\.markdown\\'" . markdown-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("README\\.md\\'" . gfm-mode))
-  :bind
-  (:map markdown-mode-map
-        ("C-c C-e" . markdown-do)))
-;; Automatically generate a table of contents when editing Markdown files
-(use-package markdown-toc
-  :ensure t
-  :commands (markdown-toc-generate-toc
-             markdown-toc-generate-or-refresh-toc
-             markdown-toc-delete-toc
-             markdown-toc--toc-already-present-p)
-  :custom
-  (markdown-toc-header-toc-title "**Table of Contents**"))
-;;; ----- markdown ----------------------------------------
-
-
-
-
-;;; ----- avy ----------------------------------------
+;;; ----- window ----------------------------------------
+(with-eval-after-load 'electric-indent-mode
+  (define-key electric-indent-mode-map (kbd "C-j") nil)) ;; C-jを上書き
 (use-package avy
   :ensure t
   :commands (avy-goto-char
              avy-goto-char-2
              avy-next)
-  :init
-  (global-set-key (kbd "C-'") 'avy-goto-char-2))
-;;; ----- avy ----------------------------------------
+  :bind
+  ("C-j" . 'avy-goto-char-2)
+  )
+
+
+
+
+(use-package expand-region
+  :config
+  (global-set-key (kbd "C-@") 'er/expand-region)
+  (global-set-key (kbd "C-M-@") 'er/contract-region) ;; リージョンを狭める
+  (transient-mark-mode t) ;; transient-mark-modeが nilでは動作しませんので注意
+  )
+
+(use-package ace-window
+  :bind ("C-t" . 'ace-window)
+  )
+
+(use-package buffer-move
+  :bind
+  ("C-c <up>" . 'buf-move-up)
+  ("C-c <down>" . 'buf-move-down)
+  ("C-c <left>" . 'buf-move-left)
+  ("C-c <right>" . 'buf-move-right)
+)
+;;; ----- window ----------------------------------------
 
 
 
@@ -820,7 +831,7 @@
 
 ;;; ----- keybind ---------------------------
 ;; window移動
-(global-set-key (kbd "C-t") 'other-window)
+;; (global-set-key (kbd "C-t") 'other-window)
 
 ; コメントアウト
 ;; (define-key global-map "\C-c;" 'comment-region)
@@ -891,6 +902,7 @@
 
 
 ;;; --------- org ---------------------------
+(setq package-start-time (current-time))
 ;; templateに用いることができるelement
 ;; https://orgmode.org/manual/Template-elements.html
 ;; %フォーマットの表記
@@ -1133,12 +1145,145 @@
   (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
 
   (global-org-modern-mode))
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "org: %.3f" elapsed))
 ;;; --------- org ---------------------------
 
 
+;;; ----- markdown ----------------------------------------
+;; The markdown-mode package provides a major mode for Emacs for syntax
+;; highlighting, editing commands, and preview support for Markdown documents.
+;; It supports core Markdown syntax as well as extensions like GitHub Flavored
+;; Markdown (GFM).
+(use-package markdown-mode
+  :commands (gfm-mode
+             gfm-view-mode
+             markdown-mode
+             markdown-view-mode)
+  :mode (("\\.markdown\\'" . markdown-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("README\\.md\\'" . gfm-mode))
+  :bind
+  (:map markdown-mode-map
+        ("C-c C-e" . markdown-do)))
+;; Automatically generate a table of contents when editing Markdown files
+(use-package markdown-toc
+  :ensure t
+  :commands (markdown-toc-generate-toc
+             markdown-toc-generate-or-refresh-toc
+             markdown-toc-delete-toc
+             markdown-toc--toc-already-present-p)
+  :custom
+  (markdown-toc-header-toc-title "**Table of Contents**"))
+;;; ----- markdown ----------------------------------------
 
 
-;;; -----------------------------------------
+;;; -------- neotree ---------------------------------
+(setq package-start-time (current-time))
+(use-package neotree
+  :after
+  projectile
+  :commands
+  (neotree-show neotree-hide neotree-dir neotree-find)
+  :custom
+  (neo-theme 'nerd-icons)
+  (neo-window-fixed-size nil) ;; 幅を調節できるようにする
+  (neo-show-hidden-files t) ;; デフォルトで隠しファイル表示
+  ;; (after-save-hook 'neotree-refresh)
+  :bind
+  ;;("<f8>" . neotree-projectile-toggle)
+  ("<f8>" . neotree-project-dir)
+  :preface
+  (defun neotree-project-dir ()
+    "Open NeoTree using the git root."
+    (interactive)
+    (let ((project-dir (projectile-project-root))
+          (file-name (buffer-file-name)))
+      (neotree-toggle)
+      (if project-dir
+          (if (neo-global--window-exists-p)
+              (progn
+                (neotree-dir project-dir)
+                (neotree-find file-name)))
+        (message "Could not find git project root."))))
+
+  )
+
+;; 不要なモードラインを消す
+(use-package hide-mode-line
+  :hook
+  ;; ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode))
+  ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode))
+
+;; 以下 usage
+;; Shortcut (Only in Neotree Buffer)
+;;  - [n] next line ， p previous line。
+;;  - [SPC] or [RET] or [TAB] Open current item if it is a file. Fold/Unfold current item if it is a directory.
+;;  - [g] Refresh
+;;  - [A] Maximize/Minimize the NeoTree Window
+;;  - [H] Toggle display hidden files
+;;  - [C-c C-n] Create a file or create a directory if filename ends with a ‘/’
+;;  - [C-c C-d] Delete a file or a directory.
+;;  - [C-c C-r] Rename a file or a directory.
+;;  - [C-c C-c] Change the root directory.
+
+;; Commands（Global）
+;;  - [neotree-dir] show NeoTree window and specify a directory as its root
+;;  - [neotree-show] or neotree show NeoTree window using current directory as its root
+;;  - [neotree-hide] Hide NeoTree window
+;;  - [neotree-toggle] toggle/hide NeoTree window
+;;  - [neotree-find] show NeoTree window and use the file of current buffer as its root
+
+;; Command（Only in NeoTree Buffer）
+;;  - [neotree-enter] Open File / Unfold Directory
+;;  - [neotree-refresh] Refresh
+;;  - [neotree-stretch-toggle] Maximize / Minimize
+;;  - [neotree-change-root] Switch Root Directory
+;;  - [neotree-hidden-file-toggle] Toggle hidden files
+;;  - [neotree-rename-node] Rename a Node
+;;  - [neotree-delete-node] Delete a Node
+;;  - [neotree-create-node] Create a file or a directory (if filename ends with ‘/’)
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "neotree: %.3f" elapsed))
+;;; -------- neotree ---------------------------------
+
+
+
+;;; -------- magit ---------------------------------
+(setq package-start-time (current-time))
+(use-package magit)
+;; (global-set-key (kbd "C-x g") 'magit-status)
+
+(use-package git-gutter-fringe
+  :custom-face
+  (git-gutter:modified . '((t (:background "#f1fa8c"))))
+  (git-gutter:added    . '((t (:background "#50fa7b"))))
+  (git-gutter:deleted  . '((t (:background "#ff79c6"))))
+  :config
+  (global-git-gutter-mode +1)
+  (setq git-gutter:modified-sign "~")
+  (setq git-gutter:added-sign    "+")
+  (setq git-gutter:deleted-sign  "-")
+  :bind
+  ("C-x g" . magit-status)
+  )
+
+;; コミットされていない箇所をウィンドウの左側に強調表示 (magitのgutterと被るかも)
+(use-package diff-hl
+  :hook ((magit-pre-refresh . diff-hl-magit-pre-refresh)
+         (magit-post-refresh . diff-hl-magit-post-refresh)
+         (dired-mode . diff-hl-dired-mode))
+  :init
+  (global-diff-hl-mode +1)
+  (global-diff-hl-show-hunk-mouse-mode +1)
+  (diff-hl-margin-mode +1))
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "magit: %.3f" elapsed))
+;;; -------- magit ---------------------------------
+
+
+;;; -------- code ---------------------------------
+(setq package-start-time (current-time))
 ;; Tree-sitter in Emacs is an incremental parsing system introduced in Emacs 29
 ;; that provides precise, high-performance syntax highlighting. It supports a
 ;; broad set of programming languages, including Bash, C, C++, C#, CMake, CSS,
@@ -1151,11 +1296,35 @@
   :config
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
-;;; -----------------------------------------
+
+(use-package treesit-fold
+  :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
+  :config
+  (setq treesit-fold-summary-exceeded-string " ▼")
+  :bind
+  ("C-h" . treesit-fold-toggle)
+  )
 
 
+(use-package flymake
+  :diminish
+  :hook ((prog-mode
+          conf-mode) . flymake-mode)
+  :config
+  (setq flymake-no-changes-timeout 0.5)
+  :init (setq flymake-no-changes-timeout nil
+              flymake-fringe-indicator-position 'right-fringe
+              flymake-margin-indicator-position 'right-margin)
+  )
+(use-package flymake-popon
+  :diminish
+  :custom-face
+  (flymake-popon ((t :inherit default :height 0.85)))
+  ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
+  :hook (flymake-mode . flymake-popon-mode)
+  :init (setq flymake-popon-width 80))
 
-;;; -----------------------------------------
+
 (use-package reformatter
   :ensure t
   :config
@@ -1173,7 +1342,9 @@
   (tsx-ts-mode . web-format-on-save-mode)
   (json-ts-mode . web-format-on-save-mode)
   (python-ts-mode . python-format-on-save-mode))
-;;; -----------------------------------------
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "code: %.3f" elapsed))
+;;; -------- code ---------------------------------
 
 
 ;;; --------- python --------------------------------
