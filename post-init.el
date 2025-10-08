@@ -370,7 +370,6 @@
   ;; is saved by `recentf-save-list', which is automatically added to
   ;; `kill-emacs-hook' by `recentf-mode'.
   (add-hook 'kill-emacs-hook #'recentf-cleanup -90)
-  (global-set-key "\C-x\ \C-r" 'recentf-open-files)
   )
 
 ;; savehist is an Emacs feature that preserves the minibuffer history between
@@ -488,6 +487,14 @@
   (add-hook 'completion-at-point-functions #'cape-file)
   (add-hook 'completion-at-point-functions #'cape-elisp-block)
   )
+;; スニペットのパッケージ
+(use-package tempel
+  :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
+         ("M-*" . tempel-insert))
+  )
+
+(use-package tempel-collection
+  :after tempel)
 ;;; ------------- corfu -----------------
 
 
@@ -500,8 +507,28 @@
 (use-package vertico
   ;; (Note: It is recommended to also enable the savehist package.)
   :ensure t
+  :custom
+  (vertico-count 20) ;; 候補リスト20
+  (vertico-resize t) ;; ウィンドウを自動でリサイズ（オプション）
   :config
   (vertico-mode))
+
+(use-package consult
+  :init
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+  (advice-add #'register-preview :override #'consult-register-window)
+  :after (vertico) ; Load after vertico
+  :bind
+  ("C-s" . consult-line)  ;; バッファ内をキーワードで検索
+  ("C-x b" . consult-buffer)
+  ("C-x 4 b" . consult-buffer-other-window)
+  ;; ("C-r" . consult-ripgrep) ;; ripgrep がインストールされていれば
+  ;; ("C-g C-g" . consult-grep) ;; デフォルトの grep コマンドに consult を適用
+  ("M-y" . consult-yank-pop) ;; kill-ring の履歴から選択
+  ("C-c C-r" . consult-register)
+  ("C-x C-r" . consult-recent-file)
+  )
 
 ;; Vertico leverages Orderless' flexible matching capabilities, allowing users
 ;; to input multiple patterns separated by spaces, which Orderless then
@@ -537,9 +564,9 @@
              embark-bindings
              embark-prefix-help-command)
   :bind
-  (("M-." . embark-act)         ;; pick some comfortable binding
-   ("C-." . embark-dwim)        ;; good alternative: M-.
-   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+  ("M-." . embark-act)         ;; pick some comfortable binding
+  ("C-." . embark-dwim)        ;; good alternative: M-.
+  ;; ("C-h B" . embark-bindings) ;; alternative for `describe-bindings'
 
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
@@ -555,18 +582,6 @@
   :ensure t
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
-
-(use-package consult
-  :init
-  :after (vertico) ; Load after vertico
-  :bind
-  ("C-s" . consult-line)  ;; バッファ内をキーワードで検索
-  ("C-x b" . consult-buffer)
-  ("C-x 4 b" . consult-buffer-other-window)
-  ;; ("C-r" . consult-ripgrep) ;; ripgrep がインストールされていれば
-  ;; ("C-g C-g" . consult-grep) ;; デフォルトの grep コマンドに consult を適用
-  ("M-y" . consult-yank-pop) ;; kill-ring の履歴から選択
-  )
 
 ;; bufferへの表示をいい感じにしてくれるらしい
 (use-package beframe
@@ -595,7 +610,7 @@
   (beframe-mode +1)
   )
 ;; ミニバッファを大きくする
-(setq resize-mini-windows t)
+;; (setq resize-mini-windows t)
 (setq mini-window-hscroll t)
 (setq mini-window-max-height 0.4)
 
@@ -606,9 +621,36 @@
 
 ;; isearch のインクリメンタルサーチをより強力に
 (setq search-whitespace-regexp ".*?")
+
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "vertico consult: %.3f" elapsed))
 ;;; ------------- Vertico、Consult、Embark -----------------
+
+
+
+;;; ------------- move/jump -----------------
+(use-package back-button
+  :init (back-button-mode 1)
+  :bind (("C-x <left>"  . back-button-global-backward)
+         ("C-x <right>" . back-button-global-forward)))
+
+
+;; register
+(defvar my/register-index ?0)
+(defun my/save-current-line-to-register ()
+  "Save current line's position to next register automatically."
+  (interactive)
+  (let ((reg my/register-index))
+    (point-to-register reg)
+    (message "Saved current line to register %c" reg)
+    ;; 次の登録先を更新（?0〜?9をループ）
+    (setq my/register-index
+          (if (= my/register-index ?9)
+              ?0
+            (1+ my/register-index)))))
+(global-set-key (kbd "C-c .") 'my/save-current-line-to-register)
+;;; ------------- move/jump -----------------
+
 
 
 
@@ -782,8 +824,6 @@
   )
 
 
-
-
 (use-package expand-region
   :config
   (global-set-key (kbd "C-@") 'er/expand-region)
@@ -796,11 +836,11 @@
   )
 
 (use-package buffer-move
-  :bind
-  ("C-c <up>" . 'buf-move-up)
-  ("C-c <down>" . 'buf-move-down)
-  ("C-c <left>" . 'buf-move-left)
-  ("C-c <right>" . 'buf-move-right)
+  :config
+  (global-set-key (kbd "C-c <up>") #'buf-move-up) ;; markdown-modeで使うbindを上書きしたいのでgloba-set-key
+  (global-set-key (kbd "C-c <down>") #'buf-move-down)
+  (global-set-key (kbd "C-c <left>") #'buf-move-left)
+  (global-set-key (kbd "C-c <right>") #'buf-move-right)
 )
 ;;; ----- window ----------------------------------------
 
