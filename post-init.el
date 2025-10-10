@@ -736,6 +736,11 @@
 ;; emacsの組み込み関数を利用してシンボルをハイライトしてくれます。
 (use-package symbol-overlay
   :hook (prog-mode . symbol-overlay-mode))
+
+;; ssh先でのlspのpathを通す
+(with-eval-after-load 'tramp
+  (add-to-list 'tramp-remote-path "/home/issei.fujimoto/go/bin")
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 ;;; ------------- eglot -----------------
 
 
@@ -846,7 +851,13 @@
   (global-set-key (kbd "C-c <down>") #'buf-move-down)
   (global-set-key (kbd "C-c <left>") #'buf-move-left)
   (global-set-key (kbd "C-c <right>") #'buf-move-right)
-)
+  )
+
+(use-package zoom
+  :config
+  (zoom-mode 1)
+  (setq zoom-size '(0.6 . 0.6))
+  )
 ;;; ----- window ----------------------------------------
 
 
@@ -1000,7 +1011,7 @@
   ;; (setq laterfile (yy-mm-file (concat work-directory "later/") "later"))
   ;; (setq techfile (yy-mm-dd-file (concat work-directory "tech/") "tech"))
 
-  (setq memofile (yy-mm-dd-file (concat work-directory "memo/") "memo"))
+  (setq memofile (yy-mm-file (concat work-directory "memo/") "memo"))
   (setq chatfile (yy-mm-dd-file (concat work-directory "chat/") "chat"))
   (setq fefile (yy-mm-file (concat work-directory "fe/") "fe"))
   (setq matsuo-lab-file (yy-mm-dd-file (concat work-directory "matsuo-lab-llm-compe/") "matsuo-lab-llm-compe"))
@@ -1018,9 +1029,9 @@
 	  ("i" "Tech memo" entry (file memofile)
            "** %? :tech: \n:PROPERTIES:\n:CREATED: %U\n:TAG: tech \n:END:\n%i\n%a\n"  :empty-lines 1)
 	  ;; ("m" "Memo" entry (file+headline memofile "Memo")
-          ;;  "* %? :memo: \n  :PROPERTIES:\n  :CREATED: %U\n  :TAG: memo\n  :END:\n  %i\n  %a\n" :empty-lines 1)
-	  ("m" "Memo" entry (file memofile)
-           "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n%a\n" :empty-lines 1 :tree-type month)
+      ;;  "* %? :memo: \n  :PROPERTIES:\n  :CREATED: %U\n  :TAG: memo\n  :END:\n  %i\n  %a\n" :empty-lines 1)
+      ("m" "Memo" entry (file memofile)
+       "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n" :empty-lines 1 :tree-type day)
 	  ("e" "emacs" entry (file memofile)
            "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n%a\n" :empty-lines 1 :tree-type month)
 	  ("p" "Pepar" entry (file memofile)
@@ -1426,6 +1437,10 @@
 
 (add-hook 'typescript-ts-hook #'eglot-ensure)
 (add-hook 'tsx-ts-hook #'eglot-ensure)
+;;; -----------------------------------------
+
+;;; --------- golang ------------------------
+(add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
 ;;; -----------------------------------------
 
 
