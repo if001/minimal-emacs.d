@@ -4,6 +4,8 @@
 ;;; code:
 
 
+(minimal-emacs-load-user-init "myconf.el")
+
 ;;; ------------- Native Compilation -----------------
 ;; Native compilation enhances Emacs performance by converting Elisp code into
 ;; native machine code, resulting in faster execution and improved
@@ -509,7 +511,7 @@
   :ensure t
   :custom
   (vertico-count 20) ;; 候補リスト20
-  (vertico-resize t) ;; ウィンドウを自動でリサイズ（オプション）
+  ;; (vertico-resize t) ;; ウィンドウを自動でリサイズ（オプション）
   :config
   (vertico-mode))
 
@@ -528,6 +530,10 @@
   ("M-y" . consult-yank-pop) ;; kill-ring の履歴から選択
   ("C-c C-r" . consult-register)
   ("C-x C-r" . consult-recent-file)
+  :config
+  (consult-customize
+   consult-recent-file :preview-key nil
+   )
   )
 
 ;; Vertico leverages Orderless' flexible matching capabilities, allowing users
@@ -564,8 +570,8 @@
              embark-bindings
              embark-prefix-help-command)
   :bind
-  ("M-." . embark-act)         ;; pick some comfortable binding
-  ("C-." . embark-dwim)        ;; good alternative: M-.
+  (("M-." . embark-act)         ;; pick some comfortable binding
+  ("C-." . embark-dwim))        ;; good alternative: M-.
   ;; ("C-h B" . embark-bindings) ;; alternative for `describe-bindings'
 
   :init
@@ -610,7 +616,7 @@
   (beframe-mode +1)
   )
 ;; ミニバッファを大きくする
-;; (setq resize-mini-windows t)
+(setq resize-mini-windows t)
 (setq mini-window-hscroll t)
 (setq mini-window-max-height 0.4)
 
