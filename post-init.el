@@ -532,8 +532,7 @@
   ("C-x C-r" . consult-recent-file)
   :config
   (consult-customize
-   consult-recent-file :preview-key nil
-   )
+   consult-recent-file :preview-key nil)
   )
 
 ;; Vertico leverages Orderless' flexible matching capabilities, allowing users
@@ -1335,13 +1334,32 @@
 ;; broad set of programming languages, including Bash, C, C++, C#, CMake, CSS,
 ;; Dockerfile, Go, Java, JavaScript, JSON, Python, Rust, TOML, TypeScript, YAML,
 ;; Elisp, Lua, Markdown, and many others.
-(use-package treesit-auto
-  :ensure t
-  :custom
-  (treesit-auto-install 'prompt)
-  :config
-  (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
+;; treesit-autoは重いのでOFF
+;; (use-package treesit-auto
+;;   :ensure t
+;;   :custom
+;;   (treesit-auto-install 'prompt)
+;;   :config
+;;   (treesit-auto-add-to-auto-mode-alist 'all)
+;;   (global-treesit-auto-mode))
+;; Treesitの設定
+(setq treesit-language-source-alist
+      '((json "https://github.com/tree-sitter/tree-sitter-json")
+        (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+        (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+        (go "https://github.com/tree-sitter/tree-sitter-go")
+        (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+        (python "https://github.com/tree-sitter/tree-sitter-python" "v0.23.3")
+        ))
+
+;; Treesitがインストールされてない場合は自動でインストールする
+(dolist (element treesit-language-source-alist)
+  (let* ((lang (car element)))
+    (if (treesit-language-available-p lang)
+        (message "treesit: %s is already installed" lang)
+      (message "treesit: %s is not installed" lang)
+      (treesit-install-language-grammar lang))))
+
 
 (use-package treesit-fold
   :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
@@ -1394,9 +1412,11 @@
 
 
 ;;; --------- python --------------------------------
-(add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
-(add-hook 'python-mode-hook #'eglot-ensure)
-(add-hook 'python-ts-mode-hook #'eglot-ensure)
+;; (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
+(setq major-mode-remap-alist
+      '((python-mode . python-ts-mode)))
+;; (add-hook 'python-mode-hook #'eglot-ensure)
+;; (add-hook 'python-ts-mode-hook #'eglot-ensure)
 ;;; -----------------------------------------
 
 
