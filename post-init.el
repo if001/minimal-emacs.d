@@ -237,8 +237,7 @@
 				  (projects  . "nf-oct-rocket")
 				  ;; (agenda    . "nf-oct-calendar")
                   (bookmarks . "nf-oct-bookmark")
-
-                  (registers . "nf-oct-database")
+                  ;; (registers . "nf-oct-database")
 				  (error-status . "nf-oct-bug")
 				  ))
   )
@@ -562,15 +561,15 @@
   ;; users to perform context-sensitive actions on selected items
   ;; directly from the completion interface.
   :ensure t
-  :commands (embark-act
-             embark-dwim
-             embark-export
-             embark-collect
-             embark-bindings
-             embark-prefix-help-command)
+  ;; :commands (embark-act
+  ;;            embark-dwim
+  ;;            embark-export
+  ;;            embark-collect
+  ;;            embark-bindings
+  ;;            embark-prefix-help-command)
   :bind
-  (("M-." . embark-act)         ;; pick some comfortable binding
-  ("C-." . embark-dwim))        ;; good alternative: M-.
+  (("C-." . embark-act)         ;; pick some comfortable binding
+  ("M-." . embark-dwim))        ;; good alternative: M-.
   ;; ("C-h B" . embark-bindings) ;; alternative for `describe-bindings'
 
   :init
@@ -630,6 +629,71 @@
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "vertico consult: %.3f" elapsed))
 ;;; ------------- Vertico、Consult、Embark -----------------
+
+
+;;; ---------------------- ispell --------------------------
+;; ;; The flyspell package is a built-in Emacs minor mode that provides
+;; ;; on-the-fly spell checking. It highlights misspelled words as you type,
+;; ;; offering interactive corrections. In text modes, it checks the entire buffer,
+;; ;; while in programming modes, it typically checks only comments and strings. It
+;; ;; integrates with external spell checkers like aspell, hunspell, or
+;; ;; ispell to provide suggestions and corrections.
+;; ;;
+;; ;; NOTE: flyspell-mode can become slow when using Aspell, especially with large
+;; ;; buffers or aggressive suggestion settings like --sug-mode=ultra. This
+;; ;; slowdown occurs because Flyspell checks words dynamically as you type or
+;; ;; navigate text, requiring frequent communication between Emacs and the
+;; ;; external Aspell process. Each check involves sending words to Aspell and
+;; ;; receiving results, which introduces overhead from process invocation and
+;; ;; inter-process communication.
+;; (use-package ispell
+;;   :ensure nil
+;;   :commands (ispell ispell-minor-mode)
+;;   :custom
+;;   ;; Set the ispell program name to aspell
+;;   (ispell-program-name "aspell")
+;;
+;;   ;; Define the "en_US" spell-check dictionary locally, telling Emacs to use
+;;   ;; UTF-8 encoding, match words using alphabetic characters, allow apostrophes
+;;   ;; inside words, treat non-alphabetic characters as word boundaries, and pass
+;;   ;; -d en_US to the underlying spell-check program.
+;;   (ispell-local-dictionary-alist
+;;    '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)))
+;;
+;;   ;; Configures Aspell's suggestion mode to "ultra", which provides more
+;;   ;; aggressive and detailed suggestions for misspelled words. The language
+;;   ;; is set to "en_US" for US English, which can be replaced with your desired
+;;   ;; language code (e.g., "en_GB" for British English, "de_DE" for German).
+;;   (ispell-extra-args '(; "--sug-mode=ultra"
+;;                        "--lang=en_US")))
+;;
+;;
+;; ;; The flyspell package is a built-in Emacs minor mode that provides
+;; ;; on-the-fly spell checking. It highlights misspelled words as you type,
+;; ;; offering interactive corrections.
+;; (use-package flyspell
+;;   :ensure nil
+;;   :commands flyspell-mode
+;;   :hook
+;;   (
+;;    (prog-mode . flyspell-mode)
+;;    (yaml-ts-mode . flyspell-mode)
+;;    )
+;;   :config
+;;   ;; Remove strings from Flyspell
+;;   (setq flyspell-prog-text-faces (delq 'font-lock-string-face
+;;                                        flyspell-prog-text-faces))
+;;
+;;   ;; Remove doc from Flyspell
+;;   (setq flyspell-prog-text-faces (delq 'font-lock-doc-face
+;;                                        flyspell-prog-text-faces)))
+
+(use-package jinx
+  :ensure t
+  :hook (emacs-startup . global-jinx-mode)
+ )
+;;; ---------------------- ispell --------------------------
+
 
 
 
@@ -1011,6 +1075,7 @@
   ;; (setq laterfile (yy-mm-file (concat work-directory "later/") "later"))
   ;; (setq techfile (yy-mm-dd-file (concat work-directory "tech/") "tech"))
 
+  (setq memofile (yy-mm-file (concat work-directory "todo/") "todo"))
   (setq memofile (yy-mm-file (concat work-directory "memo/") "memo"))
   (setq chatfile (yy-mm-dd-file (concat work-directory "chat/") "chat"))
   (setq fefile (yy-mm-file (concat work-directory "fe/") "fe"))
@@ -1356,6 +1421,13 @@
 ;; Treesitの設定
 (setq treesit-language-source-alist
       '((json "https://github.com/tree-sitter/tree-sitter-json")
+        (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+        (rust "https://github.com/tree-sitter/tree-sitter-rust")
+        (toml "https://github.com/tree-sitter/tree-sitter-toml")
+        (make "https://github.com/alemuller/tree-sitter-make")
+        (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+        (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+        (bash "https://github.com/tree-sitter/tree-sitter-bash")
         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
         (go "https://github.com/tree-sitter/tree-sitter-go")
@@ -1430,6 +1502,11 @@
 ;; (add-hook 'python-ts-mode-hook #'eglot-ensure)
 ;;; -----------------------------------------
 
+
+;;; -------------- yaml --------------------------------
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+;;; --------------- yaml --------------------------------
 
 ;;; --------- typescript --------------------------------
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
