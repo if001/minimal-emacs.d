@@ -684,14 +684,21 @@
           flymake-start-on-flymake-mode t
           flymake-start-on-newline nil))
   ;; language serverを追加する場合はここに追加していく
-  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
-  ;; (add-to-list 'eglot-server-programs '(python-mode . ("pylsp" "-v"))) ;;python用
+  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
+  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
   (add-to-list 'eglot-server-programs
                '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
   (add-to-list 'eglot-server-programs
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
                                           ".cache/lsp/elixir-ls-v0.28.0/language_server.sh"))))) ;; elixir
+  ;; pyrightを使う場合、venvのpathを手動で設定する必要がある
+  (setq-default eglot-workspace-configuration
+                '((:python . (:analysis (:typeCheckingMode "basic"
+                                         :diagnosticMode "workspace"
+                                         :autoImportCompletions t)
+                             :venvPath "."
+                             :venv ".venv"))))
   )
 ;; consultとeglotを統合するパッケージです。シンボルの検索が行えるようになります。
 (use-package consult-eglot
@@ -1411,23 +1418,32 @@
   (reformatter-define python-format
     :program "ruff"
     :args `("format" "--stdin-filename" ,buffer-file-name))
+  (reformatter-define ruff-format
+    :program "ruff"
+    :args '("format" "-"))
   :hook
   (go-ts-mode . go-format-on-save-mode)
   (typescript-ts-mode . web-format-on-save-mode)
   (tsx-ts-mode . web-format-on-save-mode)
   (json-ts-mode . web-format-on-save-mode)
-  (python-ts-mode . python-format-on-save-mode))
+  ;;(python-ts-mode . python-format-on-save-mode)
+  (python-ts-mode . ruff-format-on-save-mode)
+  )
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "code: %.3f" elapsed))
 ;;; -------- code ---------------------------------
 
 
 ;;; --------- python --------------------------------
+;; pip install ruff pyright
+
 ;; (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
 (setq major-mode-remap-alist
       '((python-mode . python-ts-mode)))
 ;; (add-hook 'python-mode-hook #'eglot-ensure)
 ;; (add-hook 'python-ts-mode-hook #'eglot-ensure)
+(use-package flymake-ruff
+  :hook (python-ts-mode . flymake-ruff-load))
 ;;; -----------------------------------------
 
 
