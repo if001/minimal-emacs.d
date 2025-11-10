@@ -60,10 +60,24 @@
 
 
 ;;; ------------- font -------------------
+;; 以下のフォントをインストール
+;; https://github.com/yuru7/PlemolJP
+;; $ cd .local/share/fonts
+;; $ wget https://github.com/yuru7/PlemolJP/releases/download/v3.0.0/PlemolJP_v3.0.0.zip
+;; $ unzip PlemolJP_v3.0.0.zip
+;; $ fc-cache -fv
+
 ;; 英語フォント
-(defvar my/font-eng "Ricty Diminished")
+;; (defvar my/font-eng "Ricty Diminished")
+(defvar my/font-eng "PlemolJP35")
+
 ;; 日本語フォント
-(defvar my/font-jp "Noto Sans CJK JP")
+;;(defvar my/font-jp "Noto Sans CJK JP")
+(defvar my/font-jp "PlemolJP35")
+
+(defvar my/font-size 12) ;; Default English font size (pt)
+(defvar my/font-jp-scale 1.20) ;; Scale factor applied to Japanese font to match Latin width.
+(defvar my/line-spacing 0.2) ;; 行間
 
 (if (string-match "issei-All-Series" (system-name))
     (progn
@@ -86,7 +100,7 @@
    (font-spec :family "Hiragino Kaku Gothic ProN" :size 10))
   ;; 英語と日本語の比率を1：2に設定
   (add-to-list 'face-font-rescale-alist
-	       '(".*Hiragino Kaku Gothic ProN.*" . 1.2))
+	       '(".*Hiragino Kaku Gothic ProN.*" . 1.3))
       )
   )
 
@@ -100,9 +114,49 @@
       (set-fontset-font t 'japanese-jisx0212 (font-spec :family my/font-jp :size 14))
       )
   )
-(setq-default line-spacing 0.1) ;; 行間を指定
-;;; ------------- font -------------------
 
+(defun my--apply-fonts (&optional frame)
+  "英語/日本語フォント・サイズ・行間を FRAME（または現在のフレーム）に適用。"
+  (interactive)
+  (let* ((frm (or frame (selected-frame)))
+         (eng my/font-eng)
+         (jp  my/font-jp)
+         (pt  my/font-size)
+         (scale my/font-jp-scale))
+    ;; デフォルト（英語）フォント
+    (set-face-attribute 'default frm :family eng :height (* 10 pt) :weight 'normal)
+    ;; 固定幅系もそろえる（必要なら）
+    (set-face-attribute 'fixed-pitch frm :family eng :height (* 10 pt))
+    ;; 可変幅は英字を読みやすいものにしたい場合はここを別指定
+    (set-face-attribute 'variable-pitch frm :family eng :height (* 10 pt))
+
+    ;; 日本語など CJK の割り当て
+    (dolist (script '(kana han cjk-misc bopomofo))
+      (set-fontset-font t script (font-spec :family jp) frm))
+
+    ;; 日英の見かけ幅を合わせる倍率（フォント名でマッチさせる）
+    ;; ※ family 全体に効かせるため前方一致の正規表現で指定
+    (let* ((jp-pattern (concat "\\`" (regexp-quote jp)))
+           (alist (copy-sequence face-font-rescale-alist)))
+      ;; 既存の同名エントリを除去してから追加
+      (setq alist (cl-remove-if (lambda (cell)
+                                  (string-match-p jp-pattern (car cell)))
+                                alist))
+      (push (cons jp-pattern scale) alist)
+      (setf (alist-get jp-pattern alist nil nil #'string=) scale)
+      (setq face-font-rescale-alist alist))
+
+    ;; 行間
+    (with-selected-frame frm
+      (setq-default line-spacing my/line-spacing))))
+
+;; 既存フレーム＆今後作成するフレームに適用
+(my--apply-fonts)
+(add-hook 'after-make-frame-functions #'my--apply-fonts)
+(set-face-attribute 'line-number nil
+                    :family my/font-eng     ; 例: "Ricty Diminished"
+                    :weight 'normal)
+;;; ------------- font -------------------
 
 
 
@@ -115,7 +169,9 @@
   :config
   (setq ef-themes-mixed-fonts t
         ef-themes-variable-pitch-ui t)
-  (load-theme 'ef-melissa-light t))
+  (load-theme 'ef-melissa-light t)
+  ;; (load-theme 'ef-light t)
+  )
 
 (use-package doom-modeline
   :ensure t
@@ -152,6 +208,11 @@
   (spacious-padding-mode +1))
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "theme: %.3f" elapsed))
+
+(use-package breadcrumb
+  :straight (breadcrumb :type git :host nil :repo "https://github.com/joaotavora/breadcrumb.git")
+  :config
+  (breadcrumb-mode +1))
 ;;; ------------- theme -------------------
 
 
@@ -514,6 +575,8 @@
   :config
   (vertico-mode))
 
+
+;; consult-imenu: 関数一覧
 (use-package consult
   :init
   (setq xref-show-xrefs-function #'consult-xref
@@ -691,8 +754,9 @@
 (use-package jinx
   :ensure t
   :hook (emacs-startup . global-jinx-mode)
-  ;; :config
-  ;; (setq jinx-languages 'en_US)
+  :config
+  (add-to-list 'jinx-exclude-regexps '(t ".*[^[:ascii:]].*"))
+  (setq jinx-languages '"en_US")
  )
 ;;; ---------------------- ispell --------------------------
 
@@ -754,14 +818,21 @@
           flymake-start-on-flymake-mode t
           flymake-start-on-newline nil))
   ;; language serverを追加する場合はここに追加していく
-  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
-  ;; (add-to-list 'eglot-server-programs '(python-mode . ("pylsp" "-v"))) ;;python用
+  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
+  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
   (add-to-list 'eglot-server-programs
                '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
   (add-to-list 'eglot-server-programs
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
                                           ".cache/lsp/elixir-ls-v0.28.0/language_server.sh"))))) ;; elixir
+  ;; pyrightを使う場合、venvのpathを手動で設定する必要がある
+  (setq-default eglot-workspace-configuration
+                '((:python . (:analysis (:typeCheckingMode "basic"
+                                         :diagnosticMode "workspace"
+                                         :autoImportCompletions t)
+                             :venvPath "."
+                             :venv ".venv"))))
   )
 ;; consultとeglotを統合するパッケージです。シンボルの検索が行えるようになります。
 (use-package consult-eglot
@@ -811,6 +882,7 @@
 (with-eval-after-load 'tramp
   (add-to-list 'tramp-remote-path "/home/issei.fujimoto/go/bin")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+(setq tramp-verbose 11)
 ;;; ------------- eglot -----------------
 
 
@@ -1489,23 +1561,32 @@
   (reformatter-define python-format
     :program "ruff"
     :args `("format" "--stdin-filename" ,buffer-file-name))
+  (reformatter-define ruff-format
+    :program "ruff"
+    :args '("format" "-"))
   :hook
   (go-ts-mode . go-format-on-save-mode)
   (typescript-ts-mode . web-format-on-save-mode)
   (tsx-ts-mode . web-format-on-save-mode)
   (json-ts-mode . web-format-on-save-mode)
-  (python-ts-mode . python-format-on-save-mode))
+  ;;(python-ts-mode . python-format-on-save-mode)
+  (python-ts-mode . ruff-format-on-save-mode)
+  )
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "code: %.3f" elapsed))
 ;;; -------- code ---------------------------------
 
 
 ;;; --------- python --------------------------------
+;; pip install ruff pyright
+
 ;; (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
 (setq major-mode-remap-alist
       '((python-mode . python-ts-mode)))
 ;; (add-hook 'python-mode-hook #'eglot-ensure)
 ;; (add-hook 'python-ts-mode-hook #'eglot-ensure)
+(use-package flymake-ruff
+  :hook (python-ts-mode . flymake-ruff-load))
 ;;; -----------------------------------------
 
 
