@@ -691,6 +691,8 @@
 (use-package jinx
   :ensure t
   :hook (emacs-startup . global-jinx-mode)
+  ;; :config
+  ;; (setq jinx-languages 'en_US)
  )
 ;;; ---------------------- ispell --------------------------
 
@@ -737,10 +739,14 @@
           ("C-c o" . eglot-code-action-organize-imports)
           ("C-c a" . eglot-code-actions)
           ("C-c h" . eldoc)
-          ("<f6>" . xref-find-definitions))
+          ("<f6>" . xref-find-definitions)
+          ("C-," . eglot-find-implementation)
+          )
   :commands (eglot-ensure
              eglot-rename
-             eglot-format-buffer)
+             eglot-format-buffer
+             eglot-code-actions
+             )
   :config
   (with-eval-after-load 'flymake
     (setq flymake-no-changes-timeout 0.5
