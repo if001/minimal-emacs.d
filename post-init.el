@@ -814,8 +814,8 @@
           flymake-start-on-flymake-mode t
           flymake-start-on-newline nil))
   ;; language serverを追加する場合はここに追加していく
-  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
-  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
+  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
+  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
   (add-to-list 'eglot-server-programs
                '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
   (add-to-list 'eglot-server-programs
@@ -1446,7 +1446,9 @@
 
 ;;; -------- magit ---------------------------------
 (setq package-start-time (current-time))
-(use-package magit)
+;; (use-package magit
+;;     :straight (magit :type git :host nil :repo "https://github.com/magit/magit.git" :tag "v4.4.2")
+;;   )
 ;; (global-set-key (kbd "C-x g") 'magit-status)
 
 (use-package git-gutter-fringe
