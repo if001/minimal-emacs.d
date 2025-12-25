@@ -393,7 +393,8 @@
 (delete-selection-mode 1)
 
 ;; １文が長過ぎる時に自動で折り返し
-(auto-fill-mode)
+;; (auto-fill-mode)
+(global-visual-line-mode t)
 ;;; ------------- others ------------------
 
 
@@ -837,13 +838,19 @@
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
                                           ".cache/lsp/elixir-ls-v0.28.0/language_server.sh"))))) ;; elixir
-  ;; pyrightを使う場合、venvのpathを手動で設定する必要がある
+
   (setq-default eglot-workspace-configuration
-                '((:python . (:analysis (:typeCheckingMode "basic"
+                '(
+                  ;; pyrightを使う場合、venvのpathを手動で設定する必要がある
+                  (:python . (:analysis (:typeCheckingMode "basic"
                                          :diagnosticMode "workspace"
                                          :autoImportCompletions t)
                              :venvPath "."
-                             :venv ".venv"))))
+                             :venv ".venv"))
+                  ;; build tagの付いたfileの場合goplsに引数が必要-tags=sample,sample2
+                  (:gopls . (:buildFlags ["-tags=mocktrident"]))
+                  )
+                )
   )
 ;; consultとeglotを統合するパッケージです。シンボルの検索が行えるようになります。
 (use-package consult-eglot
