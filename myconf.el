@@ -27,6 +27,8 @@ macOSで 'pngpaste' がインストールされている必要があります。
         (message "画像を %s に保存しました。" filepath))
     (error "pngpaste が見つかりません。Homebrewでインストールしてください。")))
 
+;; macで白いモヤがかかった画像になる場合は以下をinstall
+;; brew install coreutils
 (defun my/insert-screenshot-markdown ()
   "クリップボードの画像を './image-N.png' として現在のディレクトリに保存し、
 カーソル位置にその画像のMarkdownリンクを挿入します。
@@ -58,6 +60,54 @@ macOSで 'pngpaste' がインストールされている必要があります。
     ;; Markdown形式で挿入
     (insert (format "![](./%s)" relative-path))))
 ;;; ------------- marp -----------------
+
+
+
+
+;;; ------------- typescript language server path for eglot -----------------
+;;; typescript-language-serverの起動時、project_rootのtscを探す(見つからなければglobalを見る)
+;; project_root/app/tsconfig.jsonのような構成の場合、project_root/app/node_modulesが参照できない
+;; project_root/app以下にあるtscを参照できるような設定
+
+(defcustom my-tsserver-subdirs '("app")
+  "Directories under project root where node_modules/typescript may exist.
+Each entry is a directory name like \"app\" or \"frontend\"."
+  :type '(repeat string)
+  :group 'eglot)
+
+(setq my-tsserver-subdirs '("app" "frontend" "web"))
+
+(defun my-tsserver-path ()
+  "カレントバッファから見て、適切な tsserver.js のフルパスを探す.
+優先順:
+  1) <project_root>/<subdir>/node_modules/typescript/lib/tsserver.js
+     （subdir は `my-tsserver-subdirs` の順）
+  2) <project_root>/node_modules/typescript/lib/tsserver.js"
+  (when-let* ((proj (project-current))
+              (root (project-root proj)))
+    (let* ((candidates
+            (append
+             ;; 1. subdir/node_modules/... を順番に
+             (mapcar (lambda (subdir)
+                       (expand-file-name
+                        (format "%s/node_modules/typescript/lib/tsserver.js" subdir)
+                        root))
+                     my-tsserver-subdirs)
+             ;; 2. ルート直下の node_modules
+             (list (expand-file-name
+                    "node_modules/typescript/lib/tsserver.js" root)))))
+      (seq-find #'file-exists-p candidates))))
+
+(defun my-eglot-typescript-contact (&optional _interactive)
+  "typescript-language-server の起動コマンドを返す.
+`my-tsserver-subdirs` で指定されたディレクトリを優先的に探して
+対応する tsserver.js を使う。"
+  (if-let ((tsserver (my-tsserver-path)))
+      (list "typescript-language-server" "--stdio"
+            "--tsserver-path" tsserver)
+    ;; 見つからなければ従来どおり
+    '("typescript-language-server" "--stdio")))
+;;; ------------- typescript language server path for eglot -----------------
 
 
 
