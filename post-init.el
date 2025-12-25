@@ -209,10 +209,10 @@
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "theme: %.3f" elapsed))
 
-(use-package breadcrumb
-  :straight (breadcrumb :type git :host nil :repo "https://github.com/joaotavora/breadcrumb.git")
-  :config
-  (breadcrumb-mode +1))
+;; (use-package breadcrumb
+;;   :straight (breadcrumb :type git :host nil :repo "https://github.com/joaotavora/breadcrumb.git")
+;;   :config
+;;   (breadcrumb-mode +1))
 ;;; ------------- theme -------------------
 
 
@@ -301,6 +301,12 @@
                   ;; (registers . "nf-oct-database")
 				  (error-status . "nf-oct-bug")
 				  ))
+  (setq dashboard-footer-messages '("「ネットは広大だわ…」 - 草薙素子"
+                                    "「そう囁くのよ、私のゴーストが」 - 草薙素子"
+                                    "「ゴーストの無い義体に、果たして魂は宿るのか？」- バトー"
+                                    ))
+  ;;(setq dashboard-startup-banner (if (or (eq window-system 'x) (eq window-system 'ns) (eq window-system 'w32)) "~/.config/emacs/assets/banner.png" "~/.config/emacs/assets/banner.txt"))
+
   )
 ;;; ------------- dashboard ---------------
 
@@ -385,6 +391,9 @@
 
 ;; paste時、regionを削除してpasteする
 (delete-selection-mode 1)
+
+;; １文が長過ぎる時に自動で折り返し
+(auto-fill-mode)
 ;;; ------------- others ------------------
 
 
@@ -797,6 +806,7 @@
   (setq eglot-extend-to-xref t)
   (setq eglot-events-buffer-size 0) ;; Eglotのログ/イベントバッファは基本オフ
   (setq eglot-report-progress nil) ;; Eglotのログ/イベントバッファは基本オフ
+
   (setq read-process-output-max (* 3 1024 1024)) ;; プロセス読み取りを広げてスループットUP
   :bind ( :map eglot-mode-map
           ("C-c r" . eglot-rename)
@@ -815,6 +825,7 @@
           flymake-start-on-newline nil))
   ;; language serverを追加する場合はここに追加していく
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
+  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio" "--log-level" "trace"))) ;;python用
   (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
   (add-to-list 'eglot-server-programs
                '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
@@ -878,7 +889,7 @@
 (with-eval-after-load 'tramp
   (add-to-list 'tramp-remote-path "/home/issei.fujimoto/go/bin")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
-(setq tramp-verbose 11)
+(setq tramp-verbose 2)
 ;;; ------------- eglot -----------------
 
 
@@ -1091,6 +1102,9 @@
   ;; 以下はfcitx5の場合の例（wslなど）
   (start-process "fcitx-toggle" nil "fcitx-remote" "-t"))
 (global-set-key (kbd "C-\\") 'toggle-ime)
+
+;; regionの選択開始
+(global-set-key (kbd "C-M-SPC") #'set-mark-command)
 ;;; ----- keybind ---------------------------
 
 
@@ -1493,6 +1507,11 @@
 ;;   (treesit-auto-add-to-auto-mode-alist 'all)
 ;;   (global-treesit-auto-mode))
 ;; Treesitの設定
+;; treesitのpathを通す
+(add-to-list 'treesit-extra-load-path
+             (expand-file-name "~/.emacs.d/tree-sitter"))
+
+;; emacsのABIは14
 (setq treesit-language-source-alist
       '((json "https://github.com/tree-sitter/tree-sitter-json")
         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
@@ -1504,7 +1523,7 @@
         (bash "https://github.com/tree-sitter/tree-sitter-bash")
         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-        (go "https://github.com/tree-sitter/tree-sitter-go")
+        (go "https://github.com/tree-sitter/tree-sitter-go" "v0.23.3")
         (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
         (python "https://github.com/tree-sitter/tree-sitter-python" "v0.23.3")
         ))
@@ -1603,5 +1622,70 @@
 (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
 ;;; -----------------------------------------
 
+
+;;; --------- llm--- ------------------------
+(use-package gptel
+  :config
+  (require 'gptel-integrations)
+  ;;(require 'gptel-org)
+  (setq
+   gptel-default-mode 'org-mode
+   gptel-model 'qwen3:0.6b
+   gptel-backend (gptel-make-ollama "Ollama"
+                                    :host "172.22.1.15:11434"
+                                    :stream t
+                                    :models '(qwen3:0.6b qwen3:4b))
+   gptel-use-curl t
+   gptel-use-tools t
+   gptel-stream	t
+   gptel-max-tokens	4096
+   gptel-temperature 0
+   gptel-use-context t
+   gptel-confirm-tool-calls 'always
+   gptel-include-tool-results t ;;'auto
+   gptel-log-level "debug"
+   gptel--system-message (concat gptel--system-message " Make sure to use Japanese language.")
+   )
+  )
+
+;; --- mcp-lsp ---
+;; go install github.com/isaacphi/mcp-language-server@latest
+;; mcp-language-server --workspace /home/issei/mcp_workspace/lsp --lsp language-server-executable
+;; --- firecrawl-mcp ---
+;; git clone https://github.com/firecrawl/firecrawl-mcp-server.git
+;; npm run build
+(defvar GOBINPATH '(concat (getenv "GOPATH") "/bin"))
+(use-package mcp
+  :after gptel
+  :custom
+  (mcp-hub-servers
+   `(
+     ;; ("mcp-go-lsp" . (
+     ;;                  :command "mcp-language-server"
+     ;;                           :args ("--workspace" "/home/issei/prog/go/src/mcp-language-server" "--lsp" "gopls")
+     ;;                           :env (:PATH "/home/issei/.goenv/shims/go:/home/issei/go/1.25.4/bin/" :GOPATH (getenv "GOPATH"))
+     ;;                                )
+     ;;  )
+     ;; ;; ("duckduckgo" . (:command "uvx" :args ("duckduckgo-mcp-server")))
+     ;; ;; ("firecrawl-mcp" . (:command "npx" :args ("-y" "firecrawl-mcp", "2>" "~/prog/mcp/firecrawl-mcp-server/mcp_server.log") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
+     ;; ("firecrawl-mcp" . (
+     ;;                     :command "npm"
+     ;;                              :args ("--silent" "--prefix" "~/prog/mcp/firecrawl-mcp-server" "run" "start")
+     ;;                              :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "http://172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false"))
+     ;;  )
+     ;; ;; ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
+     ;; ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+     ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem") :roots (getenv "HOME")))
+     ;; ("sequential-thinking" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-sequential-thinking")))
+     ;; ;;("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
+     ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     )
+   )
+
+  :config
+  (require 'mcp-hub)
+  ;; (setq mcp-log-level "debug")
+  :hook (after-init . mcp-hub-start-all-server))
+;;; -----------------------------------------
 
 ;;; post-init.el ends here
