@@ -47,6 +47,32 @@
 ;;; ------------- Native Compilation -----------------
 
 
+;;; ------------- Wayland -----------------
+;; ubuntu2004, Wayland/WSLg(pgtk)でコピペするようの設定
+;; https://www.emacswiki.org/emacs/CopyAndPaste のwaylandの項目
+(setopt select-enable-clipboard 't)
+(setopt select-enable-primary nil)
+(setopt interprogram-cut-function #'gui-select-text)
+(setopt select-active-regions nil)
+;; credit: yorickvP on Github
+(setq wl-copy-process nil)
+(defun wl-copy (text)
+  (setq wl-copy-process (make-process :name "wl-copy"
+                                      :buffer nil
+                                      :command '("wl-copy" "-f" "-n")
+                                      :connection-type 'pipe
+                                      :noquery t))
+  (process-send-string wl-copy-process text)
+  (process-send-eof wl-copy-process))
+(defun wl-paste ()
+  (if (and wl-copy-process (process-live-p wl-copy-process))
+      nil ; should return nil if we're the current paste owner
+      (shell-command-to-string "wl-paste -n | tr -d \r")))
+(setq interprogram-cut-function 'wl-copy)
+(setq interprogram-paste-function 'wl-paste)
+;;; ------------- Wayland -----------------
+
+
 ;;; ------------- flame -----------------
 (setq initial-frame-alist
       (append (list
