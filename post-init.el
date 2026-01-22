@@ -866,6 +866,10 @@
                              :venvPath "."
                              :venv ".venv"))))
   )
+;; pyrightを使う場合pyproject.jsonに以下を追加する
+;; [tool.pyright]
+;; venvPath = "."
+;; venv = ".venv"
 ;; consultとeglotを統合するパッケージです。シンボルの検索が行えるようになります。
 (use-package consult-eglot
   :after eglot
@@ -901,7 +905,10 @@
 (use-package eglot-booster
 	:straight ( eglot-booster :type git :host nil :repo "https://github.com/jdtsmith/eglot-booster")
 	:after eglot
-	:config (eglot-booster-mode))
+	:config
+    (eglot-booster-mode)
+    (setq eglot-booster-io-only t) ;; eglot-boosterを使うとeldocの日本語が文字化する対策
+    )
 
 ;; emacsの組み込み関数を利用してシンボルをハイライトしてくれます。
 (use-package symbol-overlay
