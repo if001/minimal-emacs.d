@@ -546,7 +546,6 @@
   ;; corfuの設定
   (corfu-on-exact-match nil)
   (tab-always-indent 'complete)
-  (corfu-auto-delay 0.12) ; Auto-completion delay
   ;; (corfu-auto-completion-delay 0.1) ; Auto-completion delay
   (corfu-quit-at-boundary t) ; Quit completion at word boundary
   (corfu-separator ?\s) ; Separator for candidates
@@ -579,7 +578,7 @@
   (advice-add 'lsp-completion-at-point :around #'cape-wrap-nonexclusive)
   (advice-add 'lsp-completion-at-point :around #'cape-wrap-noninterruptible)
 
-  (add-hook 'completion-at-point-functions #'tempel-complete)
+  ;;(add-hook 'completion-at-point-functions #'tempel-complete) ;;tempel-completeは入れてないのでOFF
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file)
   (add-hook 'completion-at-point-functions #'cape-elisp-block)
@@ -884,9 +883,6 @@
 ;; ミニバッファのeldocをposframeで表示してくれます。
 (use-package eldoc-box
   :after eglot
-  ;; :init
-  ;; :hook
-  ;; (eglot-managed-mode-hook . eldoc-box-hover-at-point-mode) ;;Display the documentation of the symbol at point in a temporary childframe
   :config
   (set-face-attribute 'eldoc-box-border nil :background "white")
   ;; (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
@@ -1574,13 +1570,11 @@
 
 (use-package flymake
   :diminish
-  :hook ((prog-mode
-          conf-mode) . flymake-mode)
-  :config
-  (setq flymake-no-changes-timeout 0.5)
   :init (setq flymake-no-changes-timeout nil
               flymake-fringe-indicator-position 'right-fringe
               flymake-margin-indicator-position 'right-margin)
+  :config
+  (add-hook 'eglot-managed-mode-hook #'flymake-popon-mode)
   )
 (use-package flymake-popon
   :diminish
@@ -1588,7 +1582,12 @@
   (flymake-popon ((t :inherit default :height 0.85)))
   ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
   :hook (flymake-mode . flymake-popon-mode)
-  :init (setq flymake-popon-width 80))
+  :init (setq flymake-popon-width 80)
+  :config
+  (add-hook 'eglot-managed-mode-hook #'flymake-mode)
+  )
+
+
 
 
 (use-package reformatter
@@ -1626,8 +1625,10 @@
       '((python-mode . python-ts-mode)))
 ;; (add-hook 'python-mode-hook #'eglot-ensure)
 ;; (add-hook 'python-ts-mode-hook #'eglot-ensure)
-(use-package flymake-ruff
-  :hook (python-ts-mode . flymake-ruff-load))
+
+;; eglotのflymakeに任せる
+;; (use-package flymake-ruff
+;;   :hook (python-ts-mode . flymake-ruff-load))
 ;;; -----------------------------------------
 
 
