@@ -1116,21 +1116,17 @@
 (global-set-key (kbd "<C-wheel-down>") 'ignore)
 
 
-;; WSLではC-\で日英を切り替え!!!
-;; C-\ runs the command toggle-input-method
+;; ---------  wslの日英切り替え ----------------
+;; (require 'mozc) ;; package-list-packagesで入れる
+;; melpaで入れると変換候補が出ないのでapt経由で入れたほうを使う
+;; sudo apt install emacs-mozc emacs-mozc-bin
+;; https://zenn.dev/kiyoka/articles/emacs-mozc-version-upgrade-issue
+(load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+(setq default-input-method "japanese-mozc")
+(setq mozc-candidate-style 'overlay)
 
-;; wsl用 C-SPCで日英切り替える
-;; 切り替わらない場合、terminalでfcitxを起動する
-(global-unset-key (kbd "C-\\"))
-(defun start-fcitx ()
-  (interactive)
-  (start-process "start-fcitx" nil "fcitx"))
-(defun toggle-ime ()
-  "外部IMEのON/OFFを切り替えるコマンドをEmacsから呼び出す。"
-  (interactive)
-  ;; 以下はfcitx5の場合の例（wslなど）
-  (start-process "fcitx-toggle" nil "fcitx-remote" "-t"))
-(global-set-key (kbd "C-\\") 'toggle-ime)
+(global-set-key (kbd "C-SPC") 'toggle-input-method)
+;; ---------  wslの日英切り替え ----------------
 
 ;; regionの選択開始
 (global-set-key (kbd "C-M-SPC") #'set-mark-command)
