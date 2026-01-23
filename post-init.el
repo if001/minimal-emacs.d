@@ -190,15 +190,32 @@
 ;;; ------------- theme -------------------
 (setq start-time (current-time))
 
-(use-package ef-themes
+;; (use-package ef-themes
+;;   :ensure t
+;;   :config
+;;   (setq ef-themes-mixed-fonts t
+;;         ef-themes-variable-pitch-ui t)
+;;   (load-theme 'ef-melissa-light t)
+;;   ;;(load-theme 'ef-light t)
+;;   ;;(load-theme 'ef-elea-dark)
+;;   ;;(load-theme 'ef-duo-light)
+;;   ;;(load-theme 'ef-dream)
+;;   ;;(load-theme 'ef-owl t)
+;;   )
+
+
+;; (setq timu-spacegrey-flavour "light")
+(use-package timu-spacegrey-theme
   :ensure t
   :config
-  (setq ef-themes-mixed-fonts t
-        ef-themes-variable-pitch-ui t)
-  (load-theme 'ef-melissa-light t)
-  ;; (load-theme 'ef-light t)
+  (load-theme 'timu-spacegrey t)
   )
-
+;; (use-package solarized-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'solarized-light t)
+;;   )
+;;
 (use-package doom-modeline
   :ensure t
   :hook (after-init . doom-modeline-mode))
