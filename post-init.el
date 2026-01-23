@@ -560,10 +560,9 @@
   (advice-add 'lsp-completion-at-point :around #'cape-wrap-nonexclusive)
   (advice-add 'lsp-completion-at-point :around #'cape-wrap-noninterruptible)
 
-  (add-hook 'completion-at-point-functions #'tempel-complete)
-  (add-hook 'completion-at-point-functions #'cape-dabbrev)
-  (add-hook 'completion-at-point-functions #'cape-file)
-  (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  ;;(add-hook 'completion-at-point-functions #'cape-dabbrev)
+  ;;(add-hook 'completion-at-point-functions #'cape-file)
+  ;;(add-hook 'completion-at-point-functions #'cape-elisp-block)
   )
 ;; スニペットのパッケージ
 (use-package tempel
@@ -854,7 +853,7 @@
                              :venvPath "."
                              :venv ".venv"))
                   ;; build tagの付いたfileの場合goplsに引数が必要-tags=sample,sample2
-                  (:gopls . (:buildFlags ["-tags=mocktrident"]))
+                  ;; (:gopls . (:buildFlags ["-tags=!mocktrident"]))
                   )
                 )
   )
