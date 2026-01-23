@@ -918,7 +918,7 @@
 (with-eval-after-load 'tramp
   (add-to-list 'tramp-remote-path "/home/issei.fujimoto/go/bin")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
-(setq tramp-verbose 2)
+(setq tramp-verbose 2) ;; 1 Errors, 2 Warnings, 10 Traces (huge)
 ;;; ------------- eglot -----------------
 
 
