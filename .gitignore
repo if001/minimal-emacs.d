@@ -12,6 +12,7 @@ autosave/
 transient/
 straight/
 tree-sitter/
+elpa/
 
 elpa/
 tramp

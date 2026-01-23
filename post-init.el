@@ -47,6 +47,32 @@
 ;;; ------------- Native Compilation -----------------
 
 
+;;; ------------- Wayland -----------------
+;; ubuntu2004, Wayland/WSLg(pgtk)でコピペするようの設定
+;; https://www.emacswiki.org/emacs/CopyAndPaste のwaylandの項目
+(setopt select-enable-clipboard 't)
+(setopt select-enable-primary nil)
+(setopt interprogram-cut-function #'gui-select-text)
+(setopt select-active-regions nil)
+;; credit: yorickvP on Github
+(setq wl-copy-process nil)
+(defun wl-copy (text)
+  (setq wl-copy-process (make-process :name "wl-copy"
+                                      :buffer nil
+                                      :command '("wl-copy" "-f" "-n")
+                                      :connection-type 'pipe
+                                      :noquery t))
+  (process-send-string wl-copy-process text)
+  (process-send-eof wl-copy-process))
+(defun wl-paste ()
+  (if (and wl-copy-process (process-live-p wl-copy-process))
+      nil ; should return nil if we're the current paste owner
+      (shell-command-to-string "wl-paste -n | tr -d \r")))
+(setq interprogram-cut-function 'wl-copy)
+(setq interprogram-paste-function 'wl-paste)
+;;; ------------- Wayland -----------------
+
+
 ;;; ------------- flame -----------------
 (setq initial-frame-alist
       (append (list
@@ -164,15 +190,32 @@
 ;;; ------------- theme -------------------
 (setq start-time (current-time))
 
-(use-package ef-themes
+;; (use-package ef-themes
+;;   :ensure t
+;;   :config
+;;   (setq ef-themes-mixed-fonts t
+;;         ef-themes-variable-pitch-ui t)
+;;   (load-theme 'ef-melissa-light t)
+;;   ;;(load-theme 'ef-light t)
+;;   ;;(load-theme 'ef-elea-dark)
+;;   ;;(load-theme 'ef-duo-light)
+;;   ;;(load-theme 'ef-dream)
+;;   ;;(load-theme 'ef-owl t)
+;;   )
+
+
+;; (setq timu-spacegrey-flavour "light")
+(use-package timu-spacegrey-theme
   :ensure t
   :config
-  (setq ef-themes-mixed-fonts t
-        ef-themes-variable-pitch-ui t)
-  (load-theme 'ef-melissa-light t)
-  ;; (load-theme 'ef-light t)
+  (load-theme 'timu-spacegrey t)
   )
-
+;; (use-package solarized-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'solarized-light t)
+;;   )
+;;
 (use-package doom-modeline
   :ensure t
   :hook (after-init . doom-modeline-mode))
@@ -527,7 +570,6 @@
   ;; corfuの設定
   (corfu-on-exact-match nil)
   (tab-always-indent 'complete)
-  (corfu-auto-delay 0.12) ; Auto-completion delay
   ;; (corfu-auto-completion-delay 0.1) ; Auto-completion delay
   (corfu-quit-at-boundary t) ; Quit completion at word boundary
   (corfu-separator ?\s) ; Separator for candidates
@@ -560,9 +602,10 @@
   (advice-add 'lsp-completion-at-point :around #'cape-wrap-nonexclusive)
   (advice-add 'lsp-completion-at-point :around #'cape-wrap-noninterruptible)
 
-  ;;(add-hook 'completion-at-point-functions #'cape-dabbrev)
-  ;;(add-hook 'completion-at-point-functions #'cape-file)
-  ;;(add-hook 'completion-at-point-functions #'cape-elisp-block)
+  ;;(add-hook 'completion-at-point-functions #'tempel-complete) ;;tempel-completeは入れてないのでOFF
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-elisp-block)
   )
 ;; スニペットのパッケージ
 (use-package tempel
@@ -857,6 +900,10 @@
                   )
                 )
   )
+;; pyrightを使う場合pyproject.jsonに以下を追加する
+;; [tool.pyright]
+;; venvPath = "."
+;; venv = ".venv"
 ;; consultとeglotを統合するパッケージです。シンボルの検索が行えるようになります。
 (use-package consult-eglot
   :after eglot
@@ -874,9 +921,6 @@
 ;; ミニバッファのeldocをposframeで表示してくれます。
 (use-package eldoc-box
   :after eglot
-  ;; :init
-  ;; :hook
-  ;; (eglot-managed-mode-hook . eldoc-box-hover-at-point-mode) ;;Display the documentation of the symbol at point in a temporary childframe
   :config
   (set-face-attribute 'eldoc-box-border nil :background "white")
   ;; (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
@@ -895,7 +939,10 @@
 (use-package eglot-booster
 	:straight ( eglot-booster :type git :host nil :repo "https://github.com/jdtsmith/eglot-booster")
 	:after eglot
-	:config (eglot-booster-mode))
+	:config
+    (eglot-booster-mode)
+    (setq eglot-booster-io-only t) ;; eglot-boosterを使うとeldocの日本語が文字化する対策
+    )
 
 ;; emacsの組み込み関数を利用してシンボルをハイライトしてくれます。
 (use-package symbol-overlay
@@ -905,7 +952,7 @@
 (with-eval-after-load 'tramp
   (add-to-list 'tramp-remote-path "/home/issei.fujimoto/go/bin")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
-(setq tramp-verbose 2)
+(setq tramp-verbose 2) ;; 1 Errors, 2 Warnings, 10 Traces (huge)
 ;;; ------------- eglot -----------------
 
 
@@ -1103,21 +1150,17 @@
 (global-set-key (kbd "<C-wheel-down>") 'ignore)
 
 
-;; WSLではC-\で日英を切り替え!!!
-;; C-\ runs the command toggle-input-method
+;; ---------  wslの日英切り替え ----------------
+;; (require 'mozc) ;; package-list-packagesで入れる
+;; melpaで入れると変換候補が出ないのでapt経由で入れたほうを使う
+;; sudo apt install emacs-mozc emacs-mozc-bin
+;; https://zenn.dev/kiyoka/articles/emacs-mozc-version-upgrade-issue
+(load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+(setq default-input-method "japanese-mozc")
+(setq mozc-candidate-style 'overlay)
 
-;; wsl用 C-SPCで日英切り替える
-;; 切り替わらない場合、terminalでfcitxを起動する
-(global-unset-key (kbd "C-\\"))
-(defun start-fcitx ()
-  (interactive)
-  (start-process "start-fcitx" nil "fcitx"))
-(defun toggle-ime ()
-  "外部IMEのON/OFFを切り替えるコマンドをEmacsから呼び出す。"
-  (interactive)
-  ;; 以下はfcitx5の場合の例（wslなど）
-  (start-process "fcitx-toggle" nil "fcitx-remote" "-t"))
-(global-set-key (kbd "C-\\") 'toggle-ime)
+(global-set-key (kbd "C-SPC") 'toggle-input-method)
+;; ---------  wslの日英切り替え ----------------
 
 ;; regionの選択開始
 (global-set-key (kbd "C-M-SPC") #'set-mark-command)
@@ -1531,16 +1574,16 @@
 (setq treesit-language-source-alist
       '((json "https://github.com/tree-sitter/tree-sitter-json")
         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-        (rust "https://github.com/tree-sitter/tree-sitter-rust")
+        (rust "https://github.com/tree-sitter/tree-sitter-rust" "v0.23.3")
         (toml "https://github.com/tree-sitter/tree-sitter-toml")
         (make "https://github.com/alemuller/tree-sitter-make")
         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-        (bash "https://github.com/tree-sitter/tree-sitter-bash")
+        (bash "https://github.com/tree-sitter/tree-sitter-bash" "v0.23.3")
         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
         (go "https://github.com/tree-sitter/tree-sitter-go" "v0.23.3")
-        (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+        (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "v1.1.0")
         (python "https://github.com/tree-sitter/tree-sitter-python" "v0.23.3")
         ))
 
@@ -1564,13 +1607,11 @@
 
 (use-package flymake
   :diminish
-  :hook ((prog-mode
-          conf-mode) . flymake-mode)
-  :config
-  (setq flymake-no-changes-timeout 0.5)
   :init (setq flymake-no-changes-timeout nil
               flymake-fringe-indicator-position 'right-fringe
               flymake-margin-indicator-position 'right-margin)
+  :config
+  (add-hook 'eglot-managed-mode-hook #'flymake-popon-mode)
   )
 (use-package flymake-popon
   :diminish
@@ -1578,7 +1619,12 @@
   (flymake-popon ((t :inherit default :height 0.85)))
   ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
   :hook (flymake-mode . flymake-popon-mode)
-  :init (setq flymake-popon-width 80))
+  :init (setq flymake-popon-width 80)
+  :config
+  (add-hook 'eglot-managed-mode-hook #'flymake-mode)
+  )
+
+
 
 
 (use-package reformatter
@@ -1595,6 +1641,10 @@
   (reformatter-define ruff-format
     :program "ruff"
     :args '("format" "-"))
+  (reformatter-define json-format
+    :program "jq"
+    :args '(".")
+    :lighter " JSONFmt")
   :hook
   (go-ts-mode . go-format-on-save-mode)
   (typescript-ts-mode . web-format-on-save-mode)
@@ -1602,6 +1652,7 @@
   (json-ts-mode . web-format-on-save-mode)
   ;;(python-ts-mode . python-format-on-save-mode)
   (python-ts-mode . ruff-format-on-save-mode)
+  (json-mode-hook . json-format-on-save-mode)
   )
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "code: %.3f" elapsed))
@@ -1616,8 +1667,10 @@
       '((python-mode . python-ts-mode)))
 ;; (add-hook 'python-mode-hook #'eglot-ensure)
 ;; (add-hook 'python-ts-mode-hook #'eglot-ensure)
-(use-package flymake-ruff
-  :hook (python-ts-mode . flymake-ruff-load))
+
+;; eglotのflymakeに任せる
+;; (use-package flymake-ruff
+;;   :hook (python-ts-mode . flymake-ruff-load))
 ;;; -----------------------------------------
 
 
