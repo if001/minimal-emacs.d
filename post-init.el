@@ -188,6 +188,12 @@
   (nerd-icons-completion-mode)
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
+(use-package nerd-icons-corfu
+  :straight (nerd-icons-corfu :type git :host nil :repo "https://github.com/LuigiPiucco/nerd-icons-corfu")
+  :after corfu nerd-icons
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+
 ;; 画面の余白
 (use-package spacious-padding
   :config
