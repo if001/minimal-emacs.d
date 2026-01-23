@@ -1607,6 +1607,10 @@
   (reformatter-define ruff-format
     :program "ruff"
     :args '("format" "-"))
+  (reformatter-define json-format
+    :program "jq"
+    :args '(".")
+    :lighter " JSONFmt")
   :hook
   (go-ts-mode . go-format-on-save-mode)
   (typescript-ts-mode . web-format-on-save-mode)
@@ -1614,6 +1618,7 @@
   (json-ts-mode . web-format-on-save-mode)
   ;;(python-ts-mode . python-format-on-save-mode)
   (python-ts-mode . ruff-format-on-save-mode)
+  (json-mode-hook . json-format-on-save-mode)
   )
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "code: %.3f" elapsed))
