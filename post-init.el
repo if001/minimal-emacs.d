@@ -1705,11 +1705,16 @@
   ;;(require 'gptel-org)
   (setq
    gptel-default-mode 'org-mode
-   gptel-model 'qwen3:0.6b
+   gptel-model 'qwen3:8b
    gptel-backend (gptel-make-ollama "Ollama"
                                     :host "172.22.1.15:11434"
                                     :stream t
-                                    :models '(qwen3:0.6b qwen3:4b))
+                                    :models '(qwen3:0.6b qwen3:4b qwen3:8b))
+   )
+  (gptel-make-ollama "Ao-Chat"
+    :host "127.0.0.1:8181"
+    :stream t
+    :models '(ao))
    gptel-use-curl t
    gptel-use-tools t
    gptel-stream	t
@@ -1720,7 +1725,6 @@
    gptel-include-tool-results t ;;'auto
    gptel-log-level "debug"
    gptel--system-message (concat gptel--system-message " Make sure to use Japanese language.")
-   )
   )
 
 ;; --- mcp-lsp ---
@@ -1748,12 +1752,18 @@
      ;;                              :args ("--silent" "--prefix" "~/prog/mcp/firecrawl-mcp-server" "run" "start")
      ;;                              :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "http://172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false"))
      ;;  )
-     ;; ;; ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
+     ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
      ;; ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
      ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem") :roots (getenv "HOME")))
      ;; ("sequential-thinking" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-sequential-thinking")))
      ;; ;;("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
-     ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     ;; ("code-agent" . (:command
+     ;;                  "/home/issei/prog/mcp/code-deep-researcher/.venv/bin/python"
+     ;;                  :args ("run_as_mcp.py")
+     ;;                  :env (:project_root "/home/issei/prog/mcp/chat-llm-v3")
+     ;;                  ))
+     ;; ("code-agent-sse" . (:url "http://localhost:8000/mcp"))
      )
    )
 
