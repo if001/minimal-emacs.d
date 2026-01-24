@@ -888,6 +888,8 @@
   (add-to-list 'eglot-server-programs
                '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
   (add-to-list 'eglot-server-programs
+               '(js-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "1"))) ;; jsx-ts-mode
+  (add-to-list 'eglot-server-programs
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
                                           ".cache/lsp/elixir-ls-v0.28.0/language_server.sh"))))) ;; elixir
@@ -1591,6 +1593,7 @@
         (bash "https://github.com/tree-sitter/tree-sitter-bash" "v0.23.3")
         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "v0.23.1")
         (go "https://github.com/tree-sitter/tree-sitter-go" "v0.23.3")
         (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "v1.1.0")
         (python "https://github.com/tree-sitter/tree-sitter-python" "v0.23.3")
@@ -1620,51 +1623,19 @@
               flymake-fringe-indicator-position 'right-fringe
               flymake-margin-indicator-position 'right-margin)
   :config
-  (add-hook 'eglot-managed-mode-hook #'flymake-popon-mode)
-  )
-(use-package flymake-popon
-  :diminish
-  :custom-face
-  (flymake-popon ((t :inherit default :height 0.85)))
-  ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
-  :hook (flymake-mode . flymake-popon-mode)
-  :init (setq flymake-popon-width 80)
-  :config
   (add-hook 'eglot-managed-mode-hook #'flymake-mode)
   )
-
-
-
-
-(use-package reformatter
-  :ensure t
-  :config
-  (reformatter-define go-format
-    :program "goimports")
-  (reformatter-define web-format
-    :program "prettier"
-    :args `("--write" "--stdin-filepath" ,buffer-file-name))
-  (reformatter-define python-format
-    :program "ruff"
-    :args `("format" "--stdin-filename" ,buffer-file-name))
-  (reformatter-define ruff-format
-    :program "ruff"
-    :args '("format" "-"))
-  (reformatter-define json-format
-    :program "jq"
-    :args '(".")
-    :lighter " JSONFmt")
-  :hook
-  (go-ts-mode . go-format-on-save-mode)
-  (typescript-ts-mode . web-format-on-save-mode)
-  (tsx-ts-mode . web-format-on-save-mode)
-  (json-ts-mode . web-format-on-save-mode)
-  ;;(python-ts-mode . python-format-on-save-mode)
-  (python-ts-mode . ruff-format-on-save-mode)
-  (json-mode-hook . json-format-on-save-mode)
-  )
-(let ((elapsed (float-time (time-subtract (current-time) start-time))))
-  (message "code: %.3f" elapsed))
+;; popupはeldocに任せる
+;; (use-package flymake-popon
+;;   :diminish
+;;   :custom-face
+;;   (flymake-popon ((t :inherit default :height 0.85)))
+;;   ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
+;;   :hook (flymake-mode . flymake-popon-mode)
+;;   :init (setq flymake-popon-width 80)
+;;   :config
+;;   (add-hook 'eglot-managed-mode-hook #'flymake-mode)
+;;   )
 ;;; -------- code ---------------------------------
 
 
@@ -1696,9 +1667,68 @@
 (add-hook 'tsx-ts-hook #'eglot-ensure)
 ;;; -----------------------------------------
 
+;;; --------- jsx --------------------------------
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-ts-mode))
+;; reformatterでdefineすることでglobal-prettier-format-bufferが登録される
+;; save-hookはreformatterを使わず手動で設定する
+(add-hook 'js-ts-mode-hook #'my/enable-prettier-on-save)
+
+;; jsではeglot(tsserver)のflymakeが動かないので、flymake-eslintを使う
+(use-package flymake-eslint
+  :straight '(flymake-eslint :type git :host github :repo "orzechowskid/flymake-eslint")
+  :custom
+  ;; プロジェクトローカル eslint を使いたいなら npx が安定
+  (flymake-eslint-executable '("npx" "eslint")) ;; or ("npm" "exec" "--" "eslint")
+  (flymake-eslint-prefer-json-diagnostics t)
+  )
+(add-hook 'eglot-managed-mode-hook #'my/eglot-flymake-enable)
+;;; --------- jsx --------------------------------
+
+
 ;;; --------- golang ------------------------
 (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
 ;;; -----------------------------------------
+
+
+
+;;; --------- format ------------------------
+(use-package reformatter
+  :ensure t
+  :config
+  (reformatter-define go-format
+    :program "goimports")
+  (reformatter-define global-prettier-format
+    :program "prettier"
+    :args `("--stdin-filepath" ,(buffer-file-name))
+    :lighter " PrettierFmt")
+  (reformatter-define python-format
+    :program "ruff"
+    :args `("format" "--stdin-filename" ,buffer-file-name))
+  (reformatter-define ruff-format
+    :program "ruff"
+    :args '("format" "-"))
+  (reformatter-define json-format
+    :program "jq"
+    :args '(".")
+    :lighter " JSONFmt")
+
+  :hook
+  (go-ts-mode . go-format-on-save-mode)
+  (typescript-ts-mode . global-prettier-format-on-save-mode)
+  (tsx-ts-mode . global-prettier-format-on-save-mode)
+  ;;(python-ts-mode . python-format-on-save-mode)
+  (python-ts-mode . ruff-format-on-save-mode)
+  (json-mode-hook . json-format-on-save-mode)
+  (json-ts-mode . json-format-on-save-mode)
+  ;; (js-ts-mode . web-format-on-save-mode)
+  ;; (js-ts-mode . prettier-format-on-save-mode)
+  )
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "code: %.3f" elapsed))
+;;; --------- format ------------------------
+
+
 
 
 ;;; --------- llm--- ------------------------

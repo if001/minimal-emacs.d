@@ -111,4 +111,48 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 
 
 
+
+;;; -------------node_modules/.bin/prettier実行用 -----------------
+(defun my/project-root ()
+  (when-let ((proj (project-current nil)))
+    (project-root proj)))
+
+(defun my/prepend-node-modules-bin-to-path ()
+  "バッファの project root の node_modules/.bin を PATH/exec-path の先頭に挿す。"
+  (when-let* ((root (my/project-root))
+              (bin  (expand-file-name "node_modules/.bin" root)))
+    (when (file-directory-p bin)
+      ;; exec-path は Emacs 内でコマンド探索に使う
+      (setq-local exec-path (cons bin (delete bin exec-path)))
+      ;; PATH は call-process 等の外部実行環境に効く
+      (let* ((path (or (getenv "PATH") ""))
+             (sep  path-separator)
+             (new  (concat bin sep path)))
+        (setenv "PATH" new)
+        ;; バッファローカルにしたいので process-environment をローカル化
+        (setq-local process-environment (copy-sequence process-environment))
+        (setenv "PATH" new)))))
+
+
+(defun my/enable-prettier-on-save ()
+  (my/prepend-node-modules-bin-to-path)
+  ;; project-local prettier が見つかる場合だけ有効化したいならチェックも可
+  (when (executable-find "prettier")
+    (add-hook 'before-save-hook #'global-prettier-format-buffer nil t)))
+;;; -------------node_modules/.bin/prettier実行用 -----------------
+
+
+;;; ------------- js用のeslint -----------------
+;; flymake-eslintが必要
+(defun my/eglot-flymake-enable ()
+  ;; 1) LSP(tsserver) -> Flymake
+  (add-hook 'flymake-diagnostic-functions #'eglot-flymake-backend nil t)
+  ;; 2) ESLint(CLI) -> Flymake
+  (setq-local flymake-eslint-project-root (my/project-root))
+  (flymake-eslint-enable)
+  ;; 反映
+  (flymake-start t))
+;;; ------------- js用のeslint -----------------
+
+
 ;;; myconf.el ends here
