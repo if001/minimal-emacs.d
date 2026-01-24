@@ -110,41 +110,41 @@
 (defvar my/font-jp-scale 1.20) ;; Scale factor applied to Japanese font to match Latin width.
 (defvar my/line-spacing 0.2) ;; 行間
 
-(if (string-match "issei-All-Series" (system-name))
-    (progn
-      (message "linux settings")
-      (set-face-attribute 'default nil
-			  :family "Ricty Diminished"
-			  :height 110)
-      (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Ricty Diminished" :size 14))
-      )
-  )
-
-(if (string-match "ac211.local" (system-name))
-    (progn
-          (message "ac211.local settings")
-    (set-face-attribute 'default nil
-			:family "Ricty Diminished"
-			:height 140)
-  (set-fontset-font
-   nil 'japanese-jisx0208
-   (font-spec :family "Hiragino Kaku Gothic ProN" :size 10))
-  ;; 英語と日本語の比率を1：2に設定
-  (add-to-list 'face-font-rescale-alist
-	       '(".*Hiragino Kaku Gothic ProN.*" . 1.3))
-      )
-  )
-
-(if (string-match "DESKTOP-QFI57MO" (system-name))
-    (progn
-      (message "wsl settings")
-      (set-face-attribute 'default nil
-			  :family "Ricty Diminished"
-			  :height 110)
-      (set-fontset-font t 'japanese-jisx0208 (font-spec :family my/font-jp :size 14))
-      (set-fontset-font t 'japanese-jisx0212 (font-spec :family my/font-jp :size 14))
-      )
-  )
+;; (if (string-match "issei-All-Series" (system-name))
+;;     (progn
+;;       (message "linux settings")
+;;       (set-face-attribute 'default nil
+;; 			  :family "Ricty Diminished"
+;; 			  :height 110)
+;;       (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Ricty Diminished" :size 14))
+;;       )
+;;   )
+;;
+;; (if (string-match "ac211.local" (system-name))
+;;     (progn
+;;           (message "ac211.local settings")
+;;     (set-face-attribute 'default nil
+;; 			:family "Ricty Diminished"
+;; 			:height 140)
+;;   (set-fontset-font
+;;    nil 'japanese-jisx0208
+;;    (font-spec :family "Hiragino Kaku Gothic ProN" :size 10))
+;;   ;; 英語と日本語の比率を1：2に設定
+;;   (add-to-list 'face-font-rescale-alist
+;; 	       '(".*Hiragino Kaku Gothic ProN.*" . 1.3))
+;;       )
+;;   )
+;;
+;; (if (string-match "DESKTOP-QFI57MO" (system-name))
+;;     (progn
+;;       (message "wsl settings")
+;;       (set-face-attribute 'default nil
+;; 			  :family "Ricty Diminished"
+;; 			  :height 110)
+;;       (set-fontset-font t 'japanese-jisx0208 (font-spec :family my/font-jp :size 14))
+;;       (set-fontset-font t 'japanese-jisx0212 (font-spec :family my/font-jp :size 14))
+;;       )
+;;   )
 
 (defun my--apply-fonts (&optional frame)
   "英語/日本語フォント・サイズ・行間を FRAME（または現在のフレーム）に適用。"
