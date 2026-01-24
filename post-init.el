@@ -210,17 +210,25 @@
 
 
 ;; (setq timu-spacegrey-flavour "light")
-(use-package timu-spacegrey-theme
-  :ensure t
-  :config
-  (load-theme 'timu-spacegrey t)
-  )
+;; (use-package timu-spacegrey-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'timu-spacegrey t)
+;;   )
 ;; (use-package solarized-theme
 ;;   :ensure t
 ;;   :config
 ;;   (load-theme 'solarized-light t)
 ;;   )
 ;;
+(use-package autothemer)
+(use-package github-dark-dimmed-theme
+  :after autothemer
+  :straight (github-dark-dimmed-theme :type git :host nil :repo "https://github.com/ladroid/github-emacs-theme.git")
+  :ensure t
+  :config
+  (load-theme 'github-light t))
+
 (use-package doom-modeline
   :ensure t
   :hook (after-init . doom-modeline-mode))
@@ -310,8 +318,8 @@
   (centaur-tabs-icon-type 'nerd-icons)
 
   ;; To display an underline over the selected tab:
-  (centaur-tabs-set-bar 'over)
-  ;; (centaur-tabs-set-bar 'under)
+  ;; (centaur-tabs-set-bar 'over)
+  (centaur-tabs-set-bar 'under)
   (x-underline-at-descent-line t)
 
   (centaur-tabs-set-close-button nil)
@@ -918,7 +926,7 @@
               ("C-c s" . consult-eglot-symbols)))
 
 
-;; eglotの拡張
+;; eglotの拡張(基本rust用)
 (use-package eglot-x
   :straight (eglot-x :type git :host nil :repo "https://github.com/nemethf/eglot-x.git")
   :after eglot
@@ -929,7 +937,8 @@
 (use-package eldoc-box
   :after eglot
   :config
-  (set-face-attribute 'eldoc-box-border nil :background "white")
+  ;; (set-face-attribute 'eldoc-box-border nil :background "white")
+  (set-face-attribute 'eldoc-box-border nil :background "black")
   ;; (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
   (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-at-point-mode t)
   )
@@ -1539,19 +1548,19 @@
 (use-package magit)
 ;; (global-set-key (kbd "C-x g") 'magit-status)
 
-(use-package git-gutter-fringe
-  :custom-face
-  (git-gutter:modified . '((t (:background "#f1fa8c"))))
-  (git-gutter:added    . '((t (:background "#50fa7b"))))
-  (git-gutter:deleted  . '((t (:background "#ff79c6"))))
-  :config
-  (global-git-gutter-mode +1)
-  (setq git-gutter:modified-sign "~")
-  (setq git-gutter:added-sign    "+")
-  (setq git-gutter:deleted-sign  "-")
-  :bind
-  ("C-x g" . magit-status)
-  )
+;; (use-package git-gutter-fringe
+;;   :custom-face
+;;   (git-gutter:modified . '((t (:background "#f1fa8c"))))
+;;   (git-gutter:added    . '((t (:background "#50fa7b"))))
+;;   (git-gutter:deleted  . '((t (:background "#ff79c6"))))
+;;   :config
+;;   (global-git-gutter-mode +1)
+;;   (setq git-gutter:modified-sign "~")
+;;   (setq git-gutter:added-sign    "+")
+;;   (setq git-gutter:deleted-sign  "-")
+;;   :bind
+;;   ("C-x g" . magit-status)
+;;   )
 
 ;; コミットされていない箇所をウィンドウの左側に強調表示 (magitのgutterと被るかも)
 (use-package diff-hl
@@ -1562,6 +1571,20 @@
   (global-diff-hl-mode +1)
   (global-diff-hl-show-hunk-mouse-mode +1)
   (diff-hl-margin-mode +1))
+
+;; git diffをblameで比較する
+(use-package difftastic
+  :demand t
+  :bind (:map magit-blame-read-only-mode-map
+              ("D" . difftastic-magit-show)
+              ("S" . difftastic-magit-show))
+  :config
+  (eval-after-load 'magit-diff
+    '(transient-append-suffix 'magit-diff '(-1 -1)
+       [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+        ("S" "Difftastic show" difftastic-magit-show)])))
+
+
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "magit: %.3f" elapsed))
 ;;; -------- magit ---------------------------------
@@ -1744,11 +1767,16 @@
   ;;(require 'gptel-org)
   (setq
    gptel-default-mode 'org-mode
-   gptel-model 'qwen3:0.6b
+   gptel-model 'qwen3:8b
    gptel-backend (gptel-make-ollama "Ollama"
                                     :host "172.22.1.15:11434"
                                     :stream t
-                                    :models '(qwen3:0.6b qwen3:4b))
+                                    :models '(qwen3:0.6b qwen3:4b qwen3:8b))
+   )
+  (gptel-make-ollama "Ao-Chat"
+    :host "127.0.0.1:8181"
+    :stream t
+    :models '(ao))
    gptel-use-curl t
    gptel-use-tools t
    gptel-stream	t
@@ -1759,7 +1787,6 @@
    gptel-include-tool-results t ;;'auto
    gptel-log-level "debug"
    gptel--system-message (concat gptel--system-message " Make sure to use Japanese language.")
-   )
   )
 
 ;; --- mcp-lsp ---
@@ -1787,12 +1814,18 @@
      ;;                              :args ("--silent" "--prefix" "~/prog/mcp/firecrawl-mcp-server" "run" "start")
      ;;                              :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "http://172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false"))
      ;;  )
-     ;; ;; ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
+     ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
      ;; ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
      ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem") :roots (getenv "HOME")))
      ;; ("sequential-thinking" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-sequential-thinking")))
      ;; ;;("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
-     ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     ;; ("code-agent" . (:command
+     ;;                  "/home/issei/prog/mcp/code-deep-researcher/.venv/bin/python"
+     ;;                  :args ("run_as_mcp.py")
+     ;;                  :env (:project_root "/home/issei/prog/mcp/chat-llm-v3")
+     ;;                  ))
+     ;; ("code-agent-sse" . (:url "http://localhost:8000/mcp"))
      )
    )
 
