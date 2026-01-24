@@ -205,17 +205,25 @@
 
 
 ;; (setq timu-spacegrey-flavour "light")
-(use-package timu-spacegrey-theme
-  :ensure t
-  :config
-  (load-theme 'timu-spacegrey t)
-  )
+;; (use-package timu-spacegrey-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'timu-spacegrey t)
+;;   )
 ;; (use-package solarized-theme
 ;;   :ensure t
 ;;   :config
 ;;   (load-theme 'solarized-light t)
 ;;   )
 ;;
+(use-package autothemer)
+(use-package github-dark-dimmed-theme
+  :after autothemer
+  :straight (github-dark-dimmed-theme :type git :host nil :repo "https://github.com/ladroid/github-emacs-theme.git")
+  :ensure t
+  :config
+  (load-theme 'github-light t))
+
 (use-package doom-modeline
   :ensure t
   :hook (after-init . doom-modeline-mode))
@@ -299,8 +307,8 @@
   (centaur-tabs-icon-type 'nerd-icons)
 
   ;; To display an underline over the selected tab:
-  (centaur-tabs-set-bar 'over)
-  ;; (centaur-tabs-set-bar 'under)
+  ;; (centaur-tabs-set-bar 'over)
+  (centaur-tabs-set-bar 'under)
   (x-underline-at-descent-line t)
 
   (centaur-tabs-set-close-button nil)
@@ -905,7 +913,8 @@
 (use-package eldoc-box
   :after eglot
   :config
-  (set-face-attribute 'eldoc-box-border nil :background "white")
+  ;; (set-face-attribute 'eldoc-box-border nil :background "white")
+  (set-face-attribute 'eldoc-box-border nil :background "black")
   ;; (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
   (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-at-point-mode t)
   )
