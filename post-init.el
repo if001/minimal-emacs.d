@@ -1514,19 +1514,19 @@
 (use-package magit)
 ;; (global-set-key (kbd "C-x g") 'magit-status)
 
-(use-package git-gutter-fringe
-  :custom-face
-  (git-gutter:modified . '((t (:background "#f1fa8c"))))
-  (git-gutter:added    . '((t (:background "#50fa7b"))))
-  (git-gutter:deleted  . '((t (:background "#ff79c6"))))
-  :config
-  (global-git-gutter-mode +1)
-  (setq git-gutter:modified-sign "~")
-  (setq git-gutter:added-sign    "+")
-  (setq git-gutter:deleted-sign  "-")
-  :bind
-  ("C-x g" . magit-status)
-  )
+;; (use-package git-gutter-fringe
+;;   :custom-face
+;;   (git-gutter:modified . '((t (:background "#f1fa8c"))))
+;;   (git-gutter:added    . '((t (:background "#50fa7b"))))
+;;   (git-gutter:deleted  . '((t (:background "#ff79c6"))))
+;;   :config
+;;   (global-git-gutter-mode +1)
+;;   (setq git-gutter:modified-sign "~")
+;;   (setq git-gutter:added-sign    "+")
+;;   (setq git-gutter:deleted-sign  "-")
+;;   :bind
+;;   ("C-x g" . magit-status)
+;;   )
 
 ;; コミットされていない箇所をウィンドウの左側に強調表示 (magitのgutterと被るかも)
 (use-package diff-hl
@@ -1537,6 +1537,20 @@
   (global-diff-hl-mode +1)
   (global-diff-hl-show-hunk-mouse-mode +1)
   (diff-hl-margin-mode +1))
+
+;; git diffをblameで比較する
+(use-package difftastic
+  :demand t
+  :bind (:map magit-blame-read-only-mode-map
+              ("D" . difftastic-magit-show)
+              ("S" . difftastic-magit-show))
+  :config
+  (eval-after-load 'magit-diff
+    '(transient-append-suffix 'magit-diff '(-1 -1)
+       [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+        ("S" "Difftastic show" difftastic-magit-show)])))
+
+
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "magit: %.3f" elapsed))
 ;;; -------- magit ---------------------------------
