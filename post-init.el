@@ -902,7 +902,7 @@
               ("C-c s" . consult-eglot-symbols)))
 
 
-;; eglotの拡張
+;; eglotの拡張(基本rust用)
 (use-package eglot-x
   :straight (eglot-x :type git :host nil :repo "https://github.com/nemethf/eglot-x.git")
   :after eglot
