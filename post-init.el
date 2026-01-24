@@ -48,11 +48,14 @@
 
 
 ;;; ------------- Wayland -----------------
-;; ubuntu2004, Wayland/WSLg(pgtk)でコピペするようの設定
-;; https://www.emacswiki.org/emacs/CopyAndPaste のwaylandの項目
-(setopt select-enable-clipboard 't)
-(setopt select-enable-primary nil)
-(setopt interprogram-cut-function #'gui-select-text)
+;; ;; ubuntu2004, Wayland/WSLg(pgtk)でコピペするようの設定
+;; ;; https://www.emacswiki.org/emacs/CopyAndPaste のwaylandの項目
+(defconst my/hostname (system-name))
+(cond
+ ((string-match-p "winis" my/hostname)
+  (setopt select-enable-clipboard 't)
+  (setopt select-enable-primary nil)
+  (setopt interprogram-cut-function #'gui-select-text)
 (setopt select-active-regions nil)
 ;; credit: yorickvP on Github
 (setq wl-copy-process nil)
@@ -68,8 +71,10 @@
   (if (and wl-copy-process (process-live-p wl-copy-process))
       nil ; should return nil if we're the current paste owner
       (shell-command-to-string "wl-paste -n | tr -d \r")))
-(setq interprogram-cut-function 'wl-copy)
-(setq interprogram-paste-function 'wl-paste)
+  (setq interprogram-cut-function 'wl-copy)
+  (setq interprogram-paste-function 'wl-paste)
+  )
+ )
 ;;; ------------- Wayland -----------------
 
 
@@ -1155,11 +1160,15 @@
 ;; melpaで入れると変換候補が出ないのでapt経由で入れたほうを使う
 ;; sudo apt install emacs-mozc emacs-mozc-bin
 ;; https://zenn.dev/kiyoka/articles/emacs-mozc-version-upgrade-issue
-(load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
-(setq default-input-method "japanese-mozc")
-(setq mozc-candidate-style 'overlay)
-
-(global-set-key (kbd "C-SPC") 'toggle-input-method)
+(defconst my/hostname (system-name))
+(cond
+ ((string-match-p "winis" my/hostname)
+  (load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+  (setq default-input-method "japanese-mozc")
+  (setq mozc-candidate-style 'overlay)
+  (global-set-key (kbd "C-SPC") 'toggle-input-method)
+  )
+ )
 ;; ---------  wslの日英切り替え ----------------
 
 ;; regionの選択開始
