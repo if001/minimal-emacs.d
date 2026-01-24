@@ -1076,6 +1076,9 @@
   :config
   (zoom-mode 1)
   (setq zoom-size '(0.6 . 0.6))
+  (custom-set-variables
+   '(zoom-ignored-major-modes '(neotree-mode))
+   )
   )
 ;;; ----- window ----------------------------------------
 
@@ -1460,23 +1463,27 @@
 ;;; -------- neotree ---------------------------------
 (setq package-start-time (current-time))
 (use-package neotree
-  :after
-  projectile
+  ;; :after
+  ;; projectile
   :commands
   (neotree-show neotree-hide neotree-dir neotree-find)
+  :config
+  (setq neo-window-fixed-size nil)
   :custom
   (neo-theme 'nerd-icons)
   (neo-window-fixed-size nil) ;; 幅を調節できるようにする
   (neo-show-hidden-files t) ;; デフォルトで隠しファイル表示
   ;; (after-save-hook 'neotree-refresh)
   :bind
+  ("M-<up>" . enlarge-window-horizontally) ;;広げる
+  ("M-<down>" . shrink-window-horizontally) ;; 狭くする
   ;;("<f8>" . neotree-projectile-toggle)
   ("<f8>" . neotree-project-dir)
   :preface
   (defun neotree-project-dir ()
     "Open NeoTree using the git root."
     (interactive)
-    (let ((project-dir (projectile-project-root))
+    (let ((project-dir (my/project-root))
           (file-name (buffer-file-name)))
       (neotree-toggle)
       (if project-dir
@@ -1485,7 +1492,6 @@
                 (neotree-dir project-dir)
                 (neotree-find file-name)))
         (message "Could not find git project root."))))
-
   )
 
 ;; 不要なモードラインを消す
