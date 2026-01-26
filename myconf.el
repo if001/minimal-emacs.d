@@ -142,17 +142,4 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 ;;; -------------node_modules/.bin/prettier実行用 -----------------
 
 
-;;; ------------- js用のeslint -----------------
-;; flymake-eslintが必要
-(defun my/eglot-flymake-enable ()
-  ;; 1) LSP(tsserver) -> Flymake
-  (add-hook 'flymake-diagnostic-functions #'eglot-flymake-backend nil t)
-  ;; 2) ESLint(CLI) -> Flymake
-  (setq-local flymake-eslint-project-root (my/project-root))
-  (flymake-eslint-enable)
-  ;; 反映
-  (flymake-start t))
-;;; ------------- js用のeslint -----------------
-
-
 ;;; myconf.el ends here

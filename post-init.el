@@ -227,7 +227,9 @@
   :straight (github-dark-dimmed-theme :type git :host nil :repo "https://github.com/ladroid/github-emacs-theme.git")
   :ensure t
   :config
-  (load-theme 'github-light t))
+  (load-theme 'github-light t)
+  ;;(load-theme 'github-dark-dimmed t)
+  )
 
 (use-package doom-modeline
   :ensure t
@@ -889,6 +891,11 @@
           flymake-start-on-save-buffer t
           flymake-start-on-flymake-mode t
           flymake-start-on-newline nil))
+  ;; eglotがflymakeのflymake-diagnostic-functionsを上書きする
+  ;; flymake-collectionのdiagnostic-functionsを使うようにする
+  ;; M-: flymake-diagnostic-functions
+  (add-to-list 'eglot-stay-out-of 'flymake)
+
   ;; language serverを追加する場合はここに追加していく
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio" "--log-level" "trace"))) ;;python用
@@ -1179,7 +1186,8 @@
  ((string-match-p "winis" my/hostname)
   (load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
   (setq default-input-method "japanese-mozc")
-  (setq mozc-candidate-style 'overlay)
+  ;; (setq mozc-candidate-style 'overlay) ;; 表示が壊れる
+  (setq mozc-candidate-style 'echo-area)
   (global-set-key (kbd "C-SPC") 'toggle-input-method)
   )
  )
@@ -1652,7 +1660,20 @@
               flymake-fringe-indicator-position 'right-fringe
               flymake-margin-indicator-position 'right-margin)
   :config
-  (add-hook 'eglot-managed-mode-hook #'flymake-mode)
+  (add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode 1)))
+  )
+
+;; js/tsではeglotのflymake backendに加えて、eslintを使うようにする
+;; M-: flymake-diagnostic-functions
+(use-package flymake-collection
+  :hook ((after-init . flymake-collection-hook-setup)
+         ((tsx-ts-mode
+           js-ts-mode
+           jtsx-jsx-mode
+           jtsx-tsx-mode
+           jtsx-typescript-mode) . (lambda () (add-to-list 'flymake-diagnostic-functions #'flymake-collection-eslint)))
+         (eglot-managed-mode . (lambda () (add-to-list 'flymake-diagnostic-functions #'eglot-flymake-backend)))
+         )
   )
 ;; popupはeldocに任せる
 ;; (use-package flymake-popon
@@ -1699,19 +1720,61 @@
 ;;; --------- jsx --------------------------------
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-ts-mode))
-;; reformatterでdefineすることでglobal-prettier-format-bufferが登録される
+
+;; reformatterでglobal-prettier-formatをdefineすることでglobal-prettier-format-bufferが登録される
 ;; save-hookはreformatterを使わず手動で設定する
 (add-hook 'js-ts-mode-hook #'my/enable-prettier-on-save)
 
-;; jsではeglot(tsserver)のflymakeが動かないので、flymake-eslintを使う
-(use-package flymake-eslint
-  :straight '(flymake-eslint :type git :host github :repo "orzechowskid/flymake-eslint")
-  :custom
-  ;; プロジェクトローカル eslint を使いたいなら npx が安定
-  (flymake-eslint-executable '("npx" "eslint")) ;; or ("npm" "exec" "--" "eslint")
-  (flymake-eslint-prefer-json-diagnostics t)
-  )
-(add-hook 'eglot-managed-mode-hook #'my/eglot-flymake-enable)
+(use-package jtsx
+  :ensure t
+  ;; :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
+  ;;        ("\\.tsx\\'" . jtsx-tsx-mode)
+  ;;        ("\\.ts\\'" . jtsx-typescript-mode))
+  :mode (("\\.jsx?\\'" . jtsx-jsx-mode))
+  :commands jtsx-install-treesit-language
+  :hook ((jtsx-jsx-mode . hs-minor-mode)
+         (jtsx-tsx-mode . hs-minor-mode)
+         (jtsx-typescript-mode . hs-minor-mode))
+  ;; :custom
+  ;; Optional customizations
+  ;; (js-indent-level 2)
+  ;; (typescript-ts-mode-indent-offset 2)
+  ;; (jtsx-switch-indent-offset 0)
+  ;; (jtsx-indent-statement-block-regarding-standalone-parent nil)
+  ;; (jtsx-jsx-element-move-allow-step-out t)
+  ;; (jtsx-enable-jsx-electric-closing-element t)
+  ;; (jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+  ;; (jtsx-enable-jsx-element-tags-auto-sync nil)
+  ;; (jtsx-enable-all-syntax-highlighting-features t)
+  :config
+  (defun jtsx-bind-keys-to-mode-map (mode-map)
+    "Bind keys to MODE-MAP."
+    (define-key mode-map (kbd "C-c C-j") 'jtsx-jump-jsx-element-tag-dwim)
+    (define-key mode-map (kbd "C-c j o") 'jtsx-jump-jsx-opening-tag)
+    (define-key mode-map (kbd "C-c j c") 'jtsx-jump-jsx-closing-tag)
+    (define-key mode-map (kbd "C-c j r") 'jtsx-rename-jsx-element)
+    (define-key mode-map (kbd "C-c <down>") 'jtsx-move-jsx-element-tag-forward)
+    (define-key mode-map (kbd "C-c <up>") 'jtsx-move-jsx-element-tag-backward)
+    (define-key mode-map (kbd "C-c C-<down>") 'jtsx-move-jsx-element-forward)
+    (define-key mode-map (kbd "C-c C-<up>") 'jtsx-move-jsx-element-backward)
+    (define-key mode-map (kbd "C-c C-S-<down>") 'jtsx-move-jsx-element-step-in-forward)
+    (define-key mode-map (kbd "C-c C-S-<up>") 'jtsx-move-jsx-element-step-in-backward)
+    (define-key mode-map (kbd "C-c j w") 'jtsx-wrap-in-jsx-element)
+    (define-key mode-map (kbd "C-c j u") 'jtsx-unwrap-jsx)
+    (define-key mode-map (kbd "C-c j d n") 'jtsx-delete-jsx-node)
+    (define-key mode-map (kbd "C-c j d a") 'jtsx-delete-jsx-attribute)
+    (define-key mode-map (kbd "C-c j t") 'jtsx-toggle-jsx-attributes-orientation)
+    (define-key mode-map (kbd "C-c j h") 'jtsx-rearrange-jsx-attributes-horizontally)
+    (define-key mode-map (kbd "C-c j v") 'jtsx-rearrange-jsx-attributes-vertically))
+
+  (defun jtsx-bind-keys-to-jtsx-jsx-mode-map ()
+      (jtsx-bind-keys-to-mode-map jtsx-jsx-mode-map))
+
+  (defun jtsx-bind-keys-to-jtsx-tsx-mode-map ()
+      (jtsx-bind-keys-to-mode-map jtsx-tsx-mode-map))
+
+  (add-hook 'jtsx-jsx-mode-hook 'jtsx-bind-keys-to-jtsx-jsx-mode-map)
+  (add-hook 'jtsx-tsx-mode-hook 'jtsx-bind-keys-to-jtsx-tsx-mode-map))
 ;;; --------- jsx --------------------------------
 
 
