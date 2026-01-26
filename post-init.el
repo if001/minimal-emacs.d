@@ -56,20 +56,20 @@
   (setopt select-enable-clipboard 't)
   (setopt select-enable-primary nil)
   (setopt interprogram-cut-function #'gui-select-text)
-(setopt select-active-regions nil)
-;; credit: yorickvP on Github
-(setq wl-copy-process nil)
-(defun wl-copy (text)
-  (setq wl-copy-process (make-process :name "wl-copy"
+  (setopt select-active-regions nil)
+  ;; credit: yorickvP on Github
+  (setq wl-copy-process nil)
+  (defun wl-copy (text)
+    (setq wl-copy-process (make-process :name "wl-copy"
                                       :buffer nil
                                       :command '("wl-copy" "-f" "-n")
                                       :connection-type 'pipe
                                       :noquery t))
-  (process-send-string wl-copy-process text)
-  (process-send-eof wl-copy-process))
-(defun wl-paste ()
-  (if (and wl-copy-process (process-live-p wl-copy-process))
-      nil ; should return nil if we're the current paste owner
+    (process-send-string wl-copy-process text)
+    (process-send-eof wl-copy-process))
+  (defun wl-paste ()
+    (if (and wl-copy-process (process-live-p wl-copy-process))
+        nil ; should return nil if we're the current paste owner
       (shell-command-to-string "wl-paste -n | tr -d \r")))
   (setq interprogram-cut-function 'wl-copy)
   (setq interprogram-paste-function 'wl-paste)
@@ -1050,16 +1050,16 @@
 
 
 ;;; ----- window ----------------------------------------
-(with-eval-after-load 'electric-indent-mode
-  (define-key electric-indent-mode-map (kbd "C-j") nil)) ;; C-jを上書き
-(use-package avy
-  :ensure t
-  :commands (avy-goto-char
-             avy-goto-char-2
-             avy-next)
-  :bind
-  ("C-j" . 'avy-goto-char-2)
-  )
+;; (with-eval-after-load 'electric-indent-mode
+;;   (define-key electric-indent-mode-map (kbd "C-j") nil)) ;; C-jを上書き
+;; (use-package avy
+;;   :ensure t
+;;   :commands (avy-goto-char
+;;              avy-goto-char-2
+;;              avy-next)
+;;   :bind
+;;   ("C-j" . 'avy-goto-char-2)
+;;   )
 
 
 (use-package expand-region
@@ -1826,6 +1826,7 @@
      ;;                  :env (:project_root "/home/issei/prog/mcp/chat-llm-v3")
      ;;                  ))
      ;; ("code-agent-sse" . (:url "http://localhost:8000/mcp"))
+     ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
      )
    )
 
