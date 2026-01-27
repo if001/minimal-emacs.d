@@ -1652,46 +1652,6 @@
   :bind
   ("C-h" . treesit-fold-toggle)
   )
-
-
-(use-package flymake
-  :diminish
-  :init (setq flymake-no-changes-timeout nil
-              flymake-fringe-indicator-position 'right-fringe
-              flymake-margin-indicator-position 'right-margin)
-  :config
-  (add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode 1)))
-  (setq flymake-log-level 3)
-  )
-;; flymake backendの追加
-(add-hook 'eglot-managed-mode-hook #'my/eglot-flymake-enable)
-
-;; js/tsではeglot(tsserver)のflymakeが動かないので、flymake backendにeslintを使う
-;; flymake-collectionのflymake-collection-eslintではエラーがでるので、
-;; flymake-eslint packageの方を使う
-;; ただし、flymake-collectionは他にも多言語用の実装があるので、必要があれば使う
-;; M-: flymake-diagnostic-functions
-;; (use-package flymake-collection
-;;   :hook ((after-init . flymake-collection-hook-setup)
-;;          ((tsx-ts-mode
-;;            js-ts-mode
-;;            jtsx-jsx-mode
-;;            jtsx-tsx-mode
-;;            jtsx-typescript-mode) . (lambda () (add-to-list 'flymake-diagnostic-functions #'flymake-collection-eslint)))
-;;          ;;(eglot-managed-mode . (lambda () (add-to-list 'flymake-diagnostic-functions #'eglot-flymake-backend)))
-;;          )
-;;   )
-;; popupはeldocに任せる
-;; (use-package flymake-popon
-;;   :diminish
-;;   :custom-face
-;;   (flymake-popon ((t :inherit default :height 0.85)))
-;;   ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
-;;   :hook (flymake-mode . flymake-popon-mode)
-;;   :init (setq flymake-popon-width 80)
-;;   :config
-;;   (add-hook 'eglot-managed-mode-hook #'flymake-mode)
-;;   )
 ;;; -------- code ---------------------------------
 
 
@@ -1837,6 +1797,46 @@
 ;;; --------- format ------------------------
 
 
+;;; ---------- flymake ----------------------
+(use-package flymake
+  :diminish
+  :init (setq flymake-no-changes-timeout nil
+              flymake-fringe-indicator-position 'right-fringe
+              flymake-margin-indicator-position 'right-margin)
+  :config
+  (add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode 1)))
+  (setq flymake-log-level 3)
+  )
+;; flymake backendの追加
+(add-hook 'eglot-managed-mode-hook #'my/eglot-flymake-enable)
+
+;; js/tsではeglot(tsserver)のflymakeが動かないので、flymake backendにeslintを使う
+;; flymake-collectionのflymake-collection-eslintではエラーがでるので、
+;; flymake-eslint packageの方を使う
+;; ただし、flymake-collectionは他にも多言語用の実装があるので、必要があれば使う
+;; M-: flymake-diagnostic-functions
+;; (use-package flymake-collection
+;;   :hook ((after-init . flymake-collection-hook-setup)
+;;          ((tsx-ts-mode
+;;            js-ts-mode
+;;            jtsx-jsx-mode
+;;            jtsx-tsx-mode
+;;            jtsx-typescript-mode) . (lambda () (add-to-list 'flymake-diagnostic-functions #'flymake-collection-eslint)))
+;;          ;;(eglot-managed-mode . (lambda () (add-to-list 'flymake-diagnostic-functions #'eglot-flymake-backend)))
+;;          )
+;;   )
+;; popupはeldocに任せる
+;; (use-package flymake-popon
+;;   :diminish
+;;   :custom-face
+;;   (flymake-popon ((t :inherit default :height 0.85)))
+;;   ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
+;;   :hook (flymake-mode . flymake-popon-mode)
+;;   :init (setq flymake-popon-width 80)
+;;   :config
+;;   (add-hook 'eglot-managed-mode-hook #'flymake-mode)
+;;   )
+;;; ---------- flymake ----------------------
 
 
 ;;; --------- llm--- ------------------------
