@@ -221,15 +221,80 @@
 ;;   (load-theme 'solarized-light t)
 ;;   )
 ;;
-(use-package autothemer)
-(use-package github-dark-dimmed-theme
-  :after autothemer
-  :straight (github-dark-dimmed-theme :type git :host nil :repo "https://github.com/ladroid/github-emacs-theme.git")
+;; (use-package autothemer)
+;; (use-package github-dark-dimmed-theme
+;;   :after autothemer
+;;   :straight (github-dark-dimmed-theme :type git :host nil :repo "https://github.com/ladroid/github-emacs-theme.git")
+;;   :ensure t
+;;   :config
+;;   (load-theme 'github-light t)
+;;   ;;(load-theme 'github-dark-dimmed t)
+;;   )
+
+;; (use-package github-theme
+;;   :straight (github-theme :type git :host nil :repo "https://github.com/chaploud/github-theme-emacs")
+;;   :custom
+;;   (github-theme-flavor 'light)
+;;   :config
+;;   (load-theme 'github t))
+
+
+(use-package modus-themes
   :ensure t
+  :demand t
+  :init
+  ;; (modus-themes-include-derivatives-mode 1)
   :config
-  (load-theme 'github-light t)
-  ;;(load-theme 'github-dark-dimmed t)
+  (setq modus-themes-mixed-fonts t
+        modus-themes-variable-pitch-ui t
+        modus-themes-italic-constructs t
+        modus-themes-bold-constructs t
+        modus-themes-completions '((t . (bold)))
+        modus-themes-prompts '(bold)
+        modus-themes-headings
+        '((agenda-structure . (variable-pitch light 2.2))
+          (agenda-date . (variable-pitch regular 1.3))
+          (t . (regular 1.15))))
+
+  ;; 青 #0969da
+  ;; オレンジ #bc4c00
+  (setq modus-themes-bold-constructs nil)
+  (setq modus-themes-common-palette-overrides
+        '(
+          (bg-main          "#ffffff")
+          (bg-dim           "#f2f2f2")
+          (fg-main          "#000000")
+          (fg-dim           "#595959")
+          (fg-alt           "#193668")
+          (bg-active        "#c4c4c4")
+          (bg-inactive      "#e0e0e0")
+          (border           "#9f9f9f")
+
+          ;; --- GitHub Light ---
+          (red-warmer   "#bc4c00") ;; オレンジ
+
+          ;; code
+          (operator     blue-faint)
+          (keyword      red-warmer)
+          (builtin      "#24292f") ;; GitHub 文字色
+          (variable     "#24292f") ;; GitHub 文字色
+          (type         "#24292f") ;; GitHub 文字色
+          (property     blue-warmer)
+          (string       blue-faint)
+          (fnname       blue-warmer)
+
+          (bg-region    "#fff8c5") ;; 黄色
+          ;; (cursor       fg-dim)
+          ;; (fg-prompt    red-warmer)
+          ))
+  (custom-set-faces
+   '(font-lock-property-use-face ((t (:foreground "#3548cf"))))) ;; blue-warmer: #3548cf
+
+  (modus-themes-load-theme 'modus-operandi-tinted)
   )
+
+
+
 
 (use-package doom-modeline
   :ensure t
@@ -1617,6 +1682,8 @@
 ;; treesitのpathを通す
 (add-to-list 'treesit-extra-load-path
              (expand-file-name "~/.emacs.d/tree-sitter"))
+
+(setq treesit-font-lock-level 4) ;; default=3?
 
 ;; emacsのABIは14
 (setq treesit-language-source-alist
