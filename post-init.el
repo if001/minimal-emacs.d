@@ -256,41 +256,72 @@
           (agenda-date . (variable-pitch regular 1.3))
           (t . (regular 1.15))))
 
-  ;; 青 #0969da
-  ;; オレンジ #bc4c00
-  (setq modus-themes-bold-constructs nil)
+  (setq modus-themes-bold-constructs nil) ;; boldを無効化
   (setq modus-themes-common-palette-overrides
         '(
+          ;; --- GitHub Light ---
+          ;; Basic values
           (bg-main          "#ffffff")
           (bg-dim           "#f2f2f2")
-          (fg-main          "#000000")
+          (fg-main          "#24292f") ;; default #000000"
           (fg-dim           "#595959")
           (fg-alt           "#193668")
           (bg-active        "#c4c4c4")
           (bg-inactive      "#e0e0e0")
           (border           "#9f9f9f")
 
-          ;; --- GitHub Light ---
-          (red-warmer   "#bc4c00") ;; オレンジ
+          ;; (blue-cooler      "#9EECFF") ;; Blue 1
+          ;; (blue             "#3094FF") ;; Blue 2
+          ;; (blue-warmer      "#1A61FE") ;; Blue 3
+          ;; (blue-intense     "#0527FC") ;; Blue 4
+          ;; (blue-faint       "#212183") ;; Blue 5
 
-          ;; code
-          (operator     blue-faint)
-          (keyword      red-warmer)
-          (builtin      "#24292f") ;; GitHub 文字色
-          (variable     "#24292f") ;; GitHub 文字色
-          (type         "#24292f") ;; GitHub 文字色
-          (property     blue-warmer)
-          (string       blue-faint)
-          (fnname       blue-warmer)
 
-          (bg-region    "#fff8c5") ;; 黄色
-          ;; (cursor       fg-dim)
-          ;; (fg-prompt    red-warmer)
+          ;; Uncommon accent foregrounds
+          ;; (orange           "#bc4c00")
+          (orange           "#D67200") ;; github Lime 5
+          (yellow-light     "#fff8c5")  ;; 黄色
+
+          ;; Special purpose
+          (bg-region         yellow-light)
+          (bg-tab-current    bg-main)
+          (bg-hover                    bg-cyan-intense)
+          ;; General mappings
+          (cursor            fg-dim)
+
+          ;; Code mappings
+          (comment           fg-dim)
+          (operator          blue-faint)
+          (keyword           orange) ;; オレンジ
+          (builtin           fg-main) ;; GitHub 文字色
+          (variable          fg-main) ;; GitHub 文字色
+          (type              fg-main) ;; GitHub 文字色
+
+          (property          blue-warmer)
+          (string            fg-alt)
+          (fnname            blue-warmer)
+
+          ;; Paren matches
+          (bg-paren-match    bg-cyan-intense)
+
+          ;; Accent mappings
+          ;; (accent-0 cyan-intense)
+          ;; (accent-0 bg-cyan-intense)
+          (accent-0 orange)
+          (accent-1 cyan-intense)
+          (accent-2 cyan-intense)
+          (accent-3 red-cooler)
+
+          ;; Completion mappings
+          (fg-completion-match-0 cyan-intense)
+          ;; Prompt mappings
+          ;; (fg-prompt orange)
           ))
   (custom-set-faces
    '(font-lock-property-use-face ((t (:foreground "#3548cf"))))) ;; blue-warmer: #3548cf
 
-  (modus-themes-load-theme 'modus-operandi-tinted)
+  ;; (modus-themes-load-theme 'modus-operandi-deuteranopia)
+  (modus-themes-load-theme 'modus-operandi)
   )
 
 
@@ -734,7 +765,6 @@
   (consult-customize
    consult-recent-file :preview-key nil)
   )
-
 ;; Vertico leverages Orderless' flexible matching capabilities, allowing users
 ;; to input multiple patterns separated by spaces, which Orderless then
 ;; matches in any order against the candidates.
