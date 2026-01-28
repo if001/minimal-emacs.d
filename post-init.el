@@ -692,8 +692,10 @@
   (corfu-separator ?\s) ; Separator for candidates
   (corfu-popupinfo-delay 0.5) ; Delay for popup info
   (corfu-scroll-margin 3) ; Scroll margin
-  (corfu-min-width 10) ; Minimum width of completion window
+  (corfu-min-width 100) ; Minimum width of completion window
+  (corfu-max-width 100) ; Minimum width of completion window
   (corfu-max-height 15) ; Maximum height of completion window
+
 
   ;; Enable Corfu
   :config
