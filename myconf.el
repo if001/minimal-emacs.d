@@ -172,4 +172,47 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 
 
 
+
+;;; ------------- imenu listにnerd iconを使う -----------------
+(defun entry-icon-mapping (entry)
+  (pcase entry
+    ("Variable"  "nf-cod-symbol_variable")
+    ("Variables" "nf-cod-symbol_variable")
+    ("Constant"  "nf-cod-symbol_constant")
+    ("Types"     "nf-cod-list_unordered")
+    ("Function"  "nf-cod-symbol_method")
+    ("Method"    "nf-cod-symbol_method")
+    ("Field"     "nf-cod-symbol_field")
+    ("Class"     "nf-cod-symbol_class")
+    ("Interface" "nf-cod-symbol_interface")
+    (_           "nf-cod-symbol_field")
+    )
+  )
+(setq current_entry "")
+(with-eval-after-load 'imenu-list
+  (defun my/imenu-list--insert-entry (entry depth)
+    "Insert a line for ENTRY with DEPTH. (override)"
+    (if (imenu--subalist-p entry)
+        (progn
+          (setq current_entry entry)
+          (insert (imenu-list--depth-string depth))
+          (insert-button (format "+ %s" (car entry))
+                         'face (imenu-list--get-face depth t)
+                         'help-echo (format "Toggle: %s" (car entry))
+                         'follow-link t
+                         'action #'imenu-list--action-toggle-hs)
+          (insert "\n"))
+      (insert (imenu-list--depth-string depth))
+      (insert-button (format "%s %s" (nerd-icons-codicon (entry-icon-mapping (car current_entry))) (car entry))
+                     'face (imenu-list--get-face depth nil)
+                     'help-echo (format "Go to: %s" (car entry))
+                     'follow-link t
+                     'action #'imenu-list--action-goto-entry)
+      (insert "\n")))
+  )
+;; init.el側で上書きする
+;; (advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry))
+;;; ------------- imenu listにnerd iconを使う -----------------
+
+
 ;;; myconf.el ends here
