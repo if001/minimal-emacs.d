@@ -499,6 +499,7 @@
 ;; 行番号表示
 (global-display-line-numbers-mode 1) ;; グローバル
 ;; 絶対行番号（デフォルト）
+(display-line-numbers-mode t)
 (setq display-line-numbers-type t)
 
 ;; camelCase単位で移動する
@@ -1591,6 +1592,8 @@
   (neo-window-fixed-size nil) ;; 幅を調節できるようにする
   (neo-show-hidden-files t) ;; デフォルトで隠しファイル表示
   ;; (after-save-hook 'neotree-refresh)
+  ;; line-numberを表示しない
+  (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
   :bind
   ("M-<up>" . enlarge-window-horizontally) ;;広げる
   ("M-<down>" . shrink-window-horizontally) ;; 狭くする
