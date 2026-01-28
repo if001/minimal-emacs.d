@@ -996,6 +996,8 @@
   ;; flymake-collectionのdiagnostic-functionsを使うようにする
   ;; M-: flymake-diagnostic-functions
   ;; (add-to-list 'eglot-stay-out-of 'flymake)
+  ;; eglotはimenu-listを上書きする. 上書きするとfunction/structなどの構造がフラットになるため、eglotのimenu-listは使わない
+  (add-to-list 'eglot-stay-out-of 'imenu)
 
   ;; language serverを追加する場合はここに追加していく
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
@@ -1153,6 +1155,19 @@
   ;; saved file, the cursor remains in the same position, ensuring a consistent
   ;; editing experience without affecting cursor placement.
   (stripspace-restore-column t))
+
+
+(use-package imenu-list
+  :ensure t
+  :bind
+  ("<f9>" . imenu-list-smart-toggle)
+  :custom
+  (imenu-list-size 0.3)
+  :config
+  ;; line nuberを表示しない
+  (add-hook 'imenu-list-major-mode-hook (lambda () (display-line-numbers-mode -1)))
+  )
+(advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry)
 ;;; -------------------------------------------------------
 
 
@@ -1189,12 +1204,14 @@
   (global-set-key (kbd "C-c <right>") #'buf-move-right)
   )
 
+;; imenu-listと相性が悪いので一旦OFF
 (use-package zoom
   :config
-  (zoom-mode 1)
-  (setq zoom-size '(0.6 . 0.6))
+  (zoom-mode -1)
+  (setq zoom-size '(0.8 . 0.2))
   (custom-set-variables
    '(zoom-ignored-major-modes '(neotree-mode))
+   ;; '(zoom-ignored-buffer-names '("*Ilist*"))
    )
   )
 ;;; ----- window ----------------------------------------
