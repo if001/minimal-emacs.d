@@ -293,9 +293,11 @@
           (comment           fg-dim)
           (operator          blue-faint)
           (keyword           orange) ;; オレンジ
-          (builtin           fg-main) ;; GitHub 文字色
-          (variable          fg-main) ;; GitHub 文字色
-          (type              fg-main) ;; GitHub 文字色
+          (builtin           cyan-intense)
+          ;; (builtin           fg-main)
+          ;; (builtin           orange)
+          (variable          fg-main)
+          (type              fg-main)
 
           (property          blue-warmer)
           (string            fg-alt)
