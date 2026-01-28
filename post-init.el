@@ -47,6 +47,37 @@
 ;;; ------------- Native Compilation -----------------
 
 
+;;; ------------- Wayland -----------------
+;; ;; ubuntu2004, Wayland/WSLg(pgtk)でコピペするようの設定
+;; ;; https://www.emacswiki.org/emacs/CopyAndPaste のwaylandの項目
+(defconst my/hostname (system-name))
+(cond
+ ((string-match-p "winis" my/hostname)
+  (setopt select-enable-clipboard 't)
+  (setopt select-enable-primary nil)
+  (setopt interprogram-cut-function #'gui-select-text)
+  (setopt select-active-regions nil)
+  ;; credit: yorickvP on Github
+  (setq wl-copy-process nil)
+  (defun wl-copy (text)
+    (setq wl-copy-process (make-process :name "wl-copy"
+                                      :buffer nil
+                                      :command '("wl-copy" "-f" "-n")
+                                      :connection-type 'pipe
+                                      :noquery t))
+    (process-send-string wl-copy-process text)
+    (process-send-eof wl-copy-process))
+  (defun wl-paste ()
+    (if (and wl-copy-process (process-live-p wl-copy-process))
+        nil ; should return nil if we're the current paste owner
+      (shell-command-to-string "wl-paste -n | tr -d \r")))
+  (setq interprogram-cut-function 'wl-copy)
+  (setq interprogram-paste-function 'wl-paste)
+  )
+ )
+;;; ------------- Wayland -----------------
+
+
 ;;; ------------- flame -----------------
 (setq initial-frame-alist
       (append (list
@@ -79,41 +110,41 @@
 (defvar my/font-jp-scale 1.20) ;; Scale factor applied to Japanese font to match Latin width.
 (defvar my/line-spacing 0.2) ;; 行間
 
-(if (string-match "issei-All-Series" (system-name))
-    (progn
-      (message "linux settings")
-      (set-face-attribute 'default nil
-			  :family "Ricty Diminished"
-			  :height 110)
-      (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Ricty Diminished" :size 14))
-      )
-  )
-
-(if (string-match "ac211.local" (system-name))
-    (progn
-          (message "ac211.local settings")
-    (set-face-attribute 'default nil
-			:family "Ricty Diminished"
-			:height 140)
-  (set-fontset-font
-   nil 'japanese-jisx0208
-   (font-spec :family "Hiragino Kaku Gothic ProN" :size 10))
-  ;; 英語と日本語の比率を1：2に設定
-  (add-to-list 'face-font-rescale-alist
-	       '(".*Hiragino Kaku Gothic ProN.*" . 1.3))
-      )
-  )
-
-(if (string-match "DESKTOP-QFI57MO" (system-name))
-    (progn
-      (message "wsl settings")
-      (set-face-attribute 'default nil
-			  :family "Ricty Diminished"
-			  :height 110)
-      (set-fontset-font t 'japanese-jisx0208 (font-spec :family my/font-jp :size 14))
-      (set-fontset-font t 'japanese-jisx0212 (font-spec :family my/font-jp :size 14))
-      )
-  )
+;; (if (string-match "issei-All-Series" (system-name))
+;;     (progn
+;;       (message "linux settings")
+;;       (set-face-attribute 'default nil
+;; 			  :family "Ricty Diminished"
+;; 			  :height 110)
+;;       (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Ricty Diminished" :size 14))
+;;       )
+;;   )
+;;
+;; (if (string-match "ac211.local" (system-name))
+;;     (progn
+;;           (message "ac211.local settings")
+;;     (set-face-attribute 'default nil
+;; 			:family "Ricty Diminished"
+;; 			:height 140)
+;;   (set-fontset-font
+;;    nil 'japanese-jisx0208
+;;    (font-spec :family "Hiragino Kaku Gothic ProN" :size 10))
+;;   ;; 英語と日本語の比率を1：2に設定
+;;   (add-to-list 'face-font-rescale-alist
+;; 	       '(".*Hiragino Kaku Gothic ProN.*" . 1.3))
+;;       )
+;;   )
+;;
+;; (if (string-match "DESKTOP-QFI57MO" (system-name))
+;;     (progn
+;;       (message "wsl settings")
+;;       (set-face-attribute 'default nil
+;; 			  :family "Ricty Diminished"
+;; 			  :height 110)
+;;       (set-fontset-font t 'japanese-jisx0208 (font-spec :family my/font-jp :size 14))
+;;       (set-fontset-font t 'japanese-jisx0212 (font-spec :family my/font-jp :size 14))
+;;       )
+;;   )
 
 (defun my--apply-fonts (&optional frame)
   "英語/日本語フォント・サイズ・行間を FRAME（または現在のフレーム）に適用。"
@@ -164,18 +195,148 @@
 ;;; ------------- theme -------------------
 (setq start-time (current-time))
 
-(use-package ef-themes
+;; (use-package ef-themes
+;;   :ensure t
+;;   :config
+;;   (setq ef-themes-mixed-fonts t
+;;         ef-themes-variable-pitch-ui t)
+;;   (load-theme 'ef-melissa-light t)
+;;   ;;(load-theme 'ef-light t)
+;;   ;;(load-theme 'ef-elea-dark)
+;;   ;;(load-theme 'ef-duo-light)
+;;   ;;(load-theme 'ef-dream)
+;;   ;;(load-theme 'ef-owl t)
+;;   )
+
+
+;; (setq timu-spacegrey-flavour "light")
+;; (use-package timu-spacegrey-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'timu-spacegrey t)
+;;   )
+;; (use-package solarized-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'solarized-light t)
+;;   )
+;;
+;; (use-package autothemer)
+;; (use-package github-dark-dimmed-theme
+;;   :after autothemer
+;;   :straight (github-dark-dimmed-theme :type git :host nil :repo "https://github.com/ladroid/github-emacs-theme.git")
+;;   :ensure t
+;;   :config
+;;   (load-theme 'github-light t)
+;;   ;;(load-theme 'github-dark-dimmed t)
+;;   )
+
+;; (use-package github-theme
+;;   :straight (github-theme :type git :host nil :repo "https://github.com/chaploud/github-theme-emacs")
+;;   :custom
+;;   (github-theme-flavor 'light)
+;;   :config
+;;   (load-theme 'github t))
+
+
+(use-package modus-themes
   :ensure t
+  :demand t
+  :init
+  ;; (modus-themes-include-derivatives-mode 1)
   :config
-  (setq ef-themes-mixed-fonts t
-        ef-themes-variable-pitch-ui t)
-  (load-theme 'ef-melissa-light t)
-  ;; (load-theme 'ef-light t)
+  (setq modus-themes-mixed-fonts t
+        modus-themes-variable-pitch-ui t
+        modus-themes-italic-constructs t
+        modus-themes-bold-constructs t
+        modus-themes-completions '((t . (bold)))
+        modus-themes-prompts '(bold)
+        modus-themes-headings
+        '((agenda-structure . (variable-pitch light 2.2))
+          (agenda-date . (variable-pitch regular 1.3))
+          (t . (regular 1.15))))
+
+  (setq modus-themes-bold-constructs nil) ;; boldを無効化
+  (setq modus-themes-common-palette-overrides
+        '(
+          ;; --- GitHub Light ---
+          ;; Basic values
+          (bg-main          "#ffffff")
+          (bg-dim           "#f2f2f2")
+          (fg-main          "#24292f") ;; default #000000"
+          (fg-dim           "#595959")
+          (fg-alt           "#193668")
+          (bg-active        "#c4c4c4")
+          (bg-inactive      "#e0e0e0")
+          (border           "#9f9f9f")
+
+          ;; (blue-cooler      "#9EECFF") ;; Blue 1
+          ;; (blue             "#3094FF") ;; Blue 2
+          ;; (blue-warmer      "#1A61FE") ;; Blue 3
+          ;; (blue-intense     "#0527FC") ;; Blue 4
+          ;; (blue-faint       "#212183") ;; Blue 5
+
+
+          ;; Uncommon accent foregrounds
+          ;; (orange           "#bc4c00")
+          (orange           "#D67200") ;; github Lime 5
+          (yellow-light     "#fff8c5")  ;; 黄色
+
+          ;; Special purpose
+          (bg-region         yellow-light)
+          (bg-tab-current    bg-main)
+          (bg-hover                    bg-cyan-intense)
+          ;; General mappings
+          (cursor            fg-dim)
+
+          ;; Code mappings
+          (comment           fg-dim)
+          (operator          blue-faint)
+          (keyword           orange) ;; オレンジ
+          (builtin           cyan-intense)
+          ;; (builtin           fg-main)
+          ;; (builtin           orange)
+          (variable          fg-main)
+          (type              fg-main)
+
+          (property          blue-warmer)
+          (string            fg-alt)
+          (fnname            blue-warmer)
+
+          ;; Paren matches
+          (bg-paren-match    bg-cyan-intense)
+
+          ;; Accent mappings
+          ;; (accent-0 cyan-intense)
+          ;; (accent-0 bg-cyan-intense)
+          (accent-0 orange)
+          (accent-1 cyan-intense)
+          (accent-2 cyan-intense)
+          (accent-3 red-cooler)
+
+          ;; Completion mappings
+          (fg-completion-match-0 cyan-intense)
+          ;; Prompt mappings
+          ;; (fg-prompt orange)
+          ))
+  (custom-set-faces
+   '(font-lock-property-use-face ((t (:foreground "#3548cf"))))) ;; blue-warmer: #3548cf
+
+  ;; (modus-themes-load-theme 'modus-operandi-deuteranopia)
+  (modus-themes-load-theme 'modus-operandi)
   )
+
+
+
 
 (use-package doom-modeline
   :ensure t
   :hook (after-init . doom-modeline-mode))
+(use-package hide-mode-line
+  :ensure nil
+  :hook
+  ((neotree-mode imenu-list-major-mode) . hide-mode-line-mode)
+  )
 
 (use-package nerd-icons)
 
@@ -187,6 +348,12 @@
   :config
   (nerd-icons-completion-mode)
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+
+(use-package nerd-icons-corfu
+  :straight (nerd-icons-corfu :type git :host nil :repo "https://github.com/LuigiPiucco/nerd-icons-corfu")
+  :after corfu nerd-icons
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
 ;; 画面の余白
 (use-package spacious-padding
@@ -209,10 +376,10 @@
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "theme: %.3f" elapsed))
 
-(use-package breadcrumb
-  :straight (breadcrumb :type git :host nil :repo "https://github.com/joaotavora/breadcrumb.git")
-  :config
-  (breadcrumb-mode +1))
+;; (use-package breadcrumb
+;;   :straight (breadcrumb :type git :host nil :repo "https://github.com/joaotavora/breadcrumb.git")
+;;   :config
+;;   (breadcrumb-mode +1))
 ;;; ------------- theme -------------------
 
 
@@ -234,13 +401,13 @@
      (window-dedicated-p (selected-window))
 
      ;; Buffer name not match below blacklist.
-     (string-prefix-p "*Flycheck" name)
-     (string-prefix-p "*Flymake log*" name)
-     (string-prefix-p "*Warnings*" name)
-     (string-prefix-p "*Messages*" name)
-     (string-prefix-p "*lsp" name)
-     (string-prefix-p "*pylsp*" name)
-     (string-prefix-p "*pylsp::stderr*" name)
+     ;; (string-prefix-p "*Flycheck" name)
+     ;; (string-prefix-p "*Flymake log*" name)
+     ;; (string-prefix-p "*Warnings*" name)
+     ;; (string-prefix-p "*Messages*" name)
+     ;; (string-prefix-p "*lsp" name)
+     ;; (string-prefix-p "*pylsp*" name)
+     ;; (string-prefix-p "*pylsp::stderr*" name)
 
      ;; Is not magit buffer.
      (and (string-prefix-p "magit" name)
@@ -256,8 +423,8 @@
   (centaur-tabs-icon-type 'nerd-icons)
 
   ;; To display an underline over the selected tab:
-  (centaur-tabs-set-bar 'over)
-  ;; (centaur-tabs-set-bar 'under)
+  ;; (centaur-tabs-set-bar 'over)
+  (centaur-tabs-set-bar 'under)
   (x-underline-at-descent-line t)
 
   (centaur-tabs-set-close-button nil)
@@ -301,6 +468,12 @@
                   ;; (registers . "nf-oct-database")
 				  (error-status . "nf-oct-bug")
 				  ))
+  (setq dashboard-footer-messages '("「ネットは広大だわ…」 - 草薙素子"
+                                    "「そう囁くのよ、私のゴーストが」 - 草薙素子"
+                                    "「ゴーストの無い義体に、果たして魂は宿るのか？」- バトー"
+                                    ))
+  ;;(setq dashboard-startup-banner (if (or (eq window-system 'x) (eq window-system 'ns) (eq window-system 'w32)) "~/.config/emacs/assets/banner.png" "~/.config/emacs/assets/banner.txt"))
+
   )
 ;;; ------------- dashboard ---------------
 
@@ -328,6 +501,7 @@
 ;; 行番号表示
 (global-display-line-numbers-mode 1) ;; グローバル
 ;; 絶対行番号（デフォルト）
+(display-line-numbers-mode t)
 (setq display-line-numbers-type t)
 
 ;; camelCase単位で移動する
@@ -385,6 +559,10 @@
 
 ;; paste時、regionを削除してpasteする
 (delete-selection-mode 1)
+
+;; １文が長過ぎる時に自動で折り返し
+;; (auto-fill-mode)
+(global-visual-line-mode t)
 ;;; ------------- others ------------------
 
 
@@ -511,14 +689,15 @@
   ;; corfuの設定
   (corfu-on-exact-match nil)
   (tab-always-indent 'complete)
-  (corfu-auto-delay 0.12) ; Auto-completion delay
   ;; (corfu-auto-completion-delay 0.1) ; Auto-completion delay
   (corfu-quit-at-boundary t) ; Quit completion at word boundary
   (corfu-separator ?\s) ; Separator for candidates
   (corfu-popupinfo-delay 0.5) ; Delay for popup info
   (corfu-scroll-margin 3) ; Scroll margin
-  (corfu-min-width 10) ; Minimum width of completion window
+  (corfu-min-width 100) ; Minimum width of completion window
+  (corfu-max-width 100) ; Minimum width of completion window
   (corfu-max-height 15) ; Maximum height of completion window
+
 
   ;; Enable Corfu
   :config
@@ -544,7 +723,7 @@
   (advice-add 'lsp-completion-at-point :around #'cape-wrap-nonexclusive)
   (advice-add 'lsp-completion-at-point :around #'cape-wrap-noninterruptible)
 
-  (add-hook 'completion-at-point-functions #'tempel-complete)
+  ;;(add-hook 'completion-at-point-functions #'tempel-complete) ;;tempel-completeは入れてないのでOFF
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file)
   (add-hook 'completion-at-point-functions #'cape-elisp-block)
@@ -596,7 +775,6 @@
   (consult-customize
    consult-recent-file :preview-key nil)
   )
-
 ;; Vertico leverages Orderless' flexible matching capabilities, allowing users
 ;; to input multiple patterns separated by spaces, which Orderless then
 ;; matches in any order against the candidates.
@@ -797,6 +975,7 @@
   (setq eglot-extend-to-xref t)
   (setq eglot-events-buffer-size 0) ;; Eglotのログ/イベントバッファは基本オフ
   (setq eglot-report-progress nil) ;; Eglotのログ/イベントバッファは基本オフ
+
   (setq read-process-output-max (* 3 1024 1024)) ;; プロセス読み取りを広げてスループットUP
   :bind ( :map eglot-mode-map
           ("C-c r" . eglot-rename)
@@ -817,23 +996,43 @@
           flymake-start-on-save-buffer t
           flymake-start-on-flymake-mode t
           flymake-start-on-newline nil))
+  ;; eglotがflymakeのflymake-diagnostic-functionsを上書きする
+  ;; flymake-collectionのdiagnostic-functionsを使うようにする
+  ;; M-: flymake-diagnostic-functions
+  ;; (add-to-list 'eglot-stay-out-of 'flymake)
+  ;; eglotはimenu-listを上書きする. 上書きするとfunction/structなどの構造がフラットになるため、eglotのimenu-listは使わない
+  (add-to-list 'eglot-stay-out-of 'imenu)
+
   ;; language serverを追加する場合はここに追加していく
-  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
-  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
+  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
+  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio" "--log-level" "trace"))) ;;python用
+  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
   (add-to-list 'eglot-server-programs
                '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
+  (add-to-list 'eglot-server-programs
+               '(js-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "1"))) ;; jsx-ts-mode
   (add-to-list 'eglot-server-programs
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
                                           ".cache/lsp/elixir-ls-v0.28.0/language_server.sh"))))) ;; elixir
-  ;; pyrightを使う場合、venvのpathを手動で設定する必要がある
+
   (setq-default eglot-workspace-configuration
-                '((:python . (:analysis (:typeCheckingMode "basic"
+                '(
+                  ;; pyrightを使う場合、venvのpathを手動で設定する必要がある
+                  (:python . (:analysis (:typeCheckingMode "basic"
                                          :diagnosticMode "workspace"
                                          :autoImportCompletions t)
                              :venvPath "."
-                             :venv ".venv"))))
+                             :venv ".venv"))
+                  ;; build tagの付いたfileの場合goplsに引数が必要-tags=sample,sample2
+                  ;; (:gopls . (:buildFlags ["-tags=!mocktrident"]))
+                  )
+                )
   )
+;; pyrightを使う場合pyproject.jsonに以下を追加する
+;; [tool.pyright]
+;; venvPath = "."
+;; venv = ".venv"
 ;; consultとeglotを統合するパッケージです。シンボルの検索が行えるようになります。
 (use-package consult-eglot
   :after eglot
@@ -841,7 +1040,7 @@
               ("C-c s" . consult-eglot-symbols)))
 
 
-;; eglotの拡張
+;; eglotの拡張(基本rust用)
 (use-package eglot-x
   :straight (eglot-x :type git :host nil :repo "https://github.com/nemethf/eglot-x.git")
   :after eglot
@@ -851,11 +1050,9 @@
 ;; ミニバッファのeldocをposframeで表示してくれます。
 (use-package eldoc-box
   :after eglot
-  ;; :init
-  ;; :hook
-  ;; (eglot-managed-mode-hook . eldoc-box-hover-at-point-mode) ;;Display the documentation of the symbol at point in a temporary childframe
   :config
-  (set-face-attribute 'eldoc-box-border nil :background "white")
+  ;; (set-face-attribute 'eldoc-box-border nil :background "white")
+  (set-face-attribute 'eldoc-box-border nil :background "black")
   ;; (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
   (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-at-point-mode t)
   )
@@ -872,7 +1069,10 @@
 (use-package eglot-booster
 	:straight ( eglot-booster :type git :host nil :repo "https://github.com/jdtsmith/eglot-booster")
 	:after eglot
-	:config (eglot-booster-mode))
+	:config
+    (eglot-booster-mode)
+    (setq eglot-booster-io-only t) ;; eglot-boosterを使うとeldocの日本語が文字化する対策
+    )
 
 ;; emacsの組み込み関数を利用してシンボルをハイライトしてくれます。
 (use-package symbol-overlay
@@ -882,7 +1082,7 @@
 (with-eval-after-load 'tramp
   (add-to-list 'tramp-remote-path "/home/issei.fujimoto/go/bin")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
-(setq tramp-verbose 11)
+(setq tramp-verbose 2) ;; 1 Errors, 2 Warnings, 10 Traces (huge)
 ;;; ------------- eglot -----------------
 
 
@@ -959,21 +1159,34 @@
   ;; saved file, the cursor remains in the same position, ensuring a consistent
   ;; editing experience without affecting cursor placement.
   (stripspace-restore-column t))
+
+
+(use-package imenu-list
+  :ensure t
+  :bind
+  ("<f9>" . imenu-list-smart-toggle)
+  :custom
+  (imenu-list-size 0.3)
+  :config
+  ;; line nuberを表示しない
+  (add-hook 'imenu-list-major-mode-hook (lambda () (display-line-numbers-mode -1)))
+  )
+(advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry)
 ;;; -------------------------------------------------------
 
 
 
 ;;; ----- window ----------------------------------------
-(with-eval-after-load 'electric-indent-mode
-  (define-key electric-indent-mode-map (kbd "C-j") nil)) ;; C-jを上書き
-(use-package avy
-  :ensure t
-  :commands (avy-goto-char
-             avy-goto-char-2
-             avy-next)
-  :bind
-  ("C-j" . 'avy-goto-char-2)
-  )
+;; (with-eval-after-load 'electric-indent-mode
+;;   (define-key electric-indent-mode-map (kbd "C-j") nil)) ;; C-jを上書き
+;; (use-package avy
+;;   :ensure t
+;;   :commands (avy-goto-char
+;;              avy-goto-char-2
+;;              avy-next)
+;;   :bind
+;;   ("C-j" . 'avy-goto-char-2)
+;;   )
 
 
 (use-package expand-region
@@ -995,10 +1208,15 @@
   (global-set-key (kbd "C-c <right>") #'buf-move-right)
   )
 
+;; imenu-listと相性が悪いので一旦OFF
 (use-package zoom
   :config
-  (zoom-mode 1)
-  (setq zoom-size '(0.6 . 0.6))
+  (zoom-mode -1)
+  (setq zoom-size '(0.8 . 0.2))
+  (custom-set-variables
+   '(zoom-ignored-major-modes '(neotree-mode))
+   ;; '(zoom-ignored-buffer-names '("*Ilist*"))
+   )
   )
 ;;; ----- window ----------------------------------------
 
@@ -1080,21 +1298,25 @@
 (global-set-key (kbd "<C-wheel-down>") 'ignore)
 
 
-;; WSLではC-\で日英を切り替え!!!
-;; C-\ runs the command toggle-input-method
+;; ---------  wslの日英切り替え ----------------
+;; (require 'mozc) ;; package-list-packagesで入れる
+;; melpaで入れると変換候補が出ないのでapt経由で入れたほうを使う
+;; sudo apt install emacs-mozc emacs-mozc-bin
+;; https://zenn.dev/kiyoka/articles/emacs-mozc-version-upgrade-issue
+(defconst my/hostname (system-name))
+(cond
+ ((string-match-p "winis" my/hostname)
+  (load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+  (setq default-input-method "japanese-mozc")
+  ;; (setq mozc-candidate-style 'overlay) ;; 表示が壊れる
+  (setq mozc-candidate-style 'echo-area)
+  (global-set-key (kbd "C-SPC") 'toggle-input-method)
+  )
+ )
+;; ---------  wslの日英切り替え ----------------
 
-;; wsl用 C-SPCで日英切り替える
-;; 切り替わらない場合、terminalでfcitxを起動する
-(global-unset-key (kbd "C-\\"))
-(defun start-fcitx ()
-  (interactive)
-  (start-process "start-fcitx" nil "fcitx"))
-(defun toggle-ime ()
-  "外部IMEのON/OFFを切り替えるコマンドをEmacsから呼び出す。"
-  (interactive)
-  ;; 以下はfcitx5の場合の例（wslなど）
-  (start-process "fcitx-toggle" nil "fcitx-remote" "-t"))
-(global-set-key (kbd "C-\\") 'toggle-ime)
+;; regionの選択開始
+(global-set-key (kbd "C-M-SPC") #'set-mark-command)
 ;;; ----- keybind ---------------------------
 
 
@@ -1380,23 +1602,29 @@
 ;;; -------- neotree ---------------------------------
 (setq package-start-time (current-time))
 (use-package neotree
-  :after
-  projectile
+  ;; :after
+  ;; projectile
   :commands
   (neotree-show neotree-hide neotree-dir neotree-find)
+  :config
+  (setq neo-window-fixed-size nil)
   :custom
   (neo-theme 'nerd-icons)
   (neo-window-fixed-size nil) ;; 幅を調節できるようにする
   (neo-show-hidden-files t) ;; デフォルトで隠しファイル表示
   ;; (after-save-hook 'neotree-refresh)
+  ;; line-numberを表示しない
+  (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
   :bind
+  ("M-<up>" . enlarge-window-horizontally) ;;広げる
+  ("M-<down>" . shrink-window-horizontally) ;; 狭くする
   ;;("<f8>" . neotree-projectile-toggle)
   ("<f8>" . neotree-project-dir)
   :preface
   (defun neotree-project-dir ()
     "Open NeoTree using the git root."
     (interactive)
-    (let ((project-dir (projectile-project-root))
+    (let ((project-dir (my/project-root))
           (file-name (buffer-file-name)))
       (neotree-toggle)
       (if project-dir
@@ -1405,14 +1633,14 @@
                 (neotree-dir project-dir)
                 (neotree-find file-name)))
         (message "Could not find git project root."))))
-
   )
 
 ;; 不要なモードラインを消す
 (use-package hide-mode-line
   :hook
-  ;; ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode))
-  ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode))
+  ;; ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode)
+  ((neotree-mode) . hide-mode-line-mode)
+  )
 
 ;; 以下 usage
 ;; Shortcut (Only in Neotree Buffer)
@@ -1455,19 +1683,19 @@
 ;;   )
 ;; (global-set-key (kbd "C-x g") 'magit-status)
 
-(use-package git-gutter-fringe
-  :custom-face
-  (git-gutter:modified . '((t (:background "#f1fa8c"))))
-  (git-gutter:added    . '((t (:background "#50fa7b"))))
-  (git-gutter:deleted  . '((t (:background "#ff79c6"))))
-  :config
-  (global-git-gutter-mode +1)
-  (setq git-gutter:modified-sign "~")
-  (setq git-gutter:added-sign    "+")
-  (setq git-gutter:deleted-sign  "-")
-  :bind
-  ("C-x g" . magit-status)
-  )
+;; (use-package git-gutter-fringe
+;;   :custom-face
+;;   (git-gutter:modified . '((t (:background "#f1fa8c"))))
+;;   (git-gutter:added    . '((t (:background "#50fa7b"))))
+;;   (git-gutter:deleted  . '((t (:background "#ff79c6"))))
+;;   :config
+;;   (global-git-gutter-mode +1)
+;;   (setq git-gutter:modified-sign "~")
+;;   (setq git-gutter:added-sign    "+")
+;;   (setq git-gutter:deleted-sign  "-")
+;;   :bind
+;;   ("C-x g" . magit-status)
+;;   )
 
 ;; コミットされていない箇所をウィンドウの左側に強調表示 (magitのgutterと被るかも)
 (use-package diff-hl
@@ -1478,6 +1706,20 @@
   (global-diff-hl-mode +1)
   (global-diff-hl-show-hunk-mouse-mode +1)
   (diff-hl-margin-mode +1))
+
+;; git diffをblameで比較する
+(use-package difftastic
+  :demand t
+  :bind (:map magit-blame-read-only-mode-map
+              ("D" . difftastic-magit-show)
+              ("S" . difftastic-magit-show))
+  :config
+  (eval-after-load 'magit-diff
+    '(transient-append-suffix 'magit-diff '(-1 -1)
+       [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+        ("S" "Difftastic show" difftastic-magit-show)])))
+
+
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "magit: %.3f" elapsed))
 ;;; -------- magit ---------------------------------
@@ -1499,19 +1741,27 @@
 ;;   (treesit-auto-add-to-auto-mode-alist 'all)
 ;;   (global-treesit-auto-mode))
 ;; Treesitの設定
+;; treesitのpathを通す
+(add-to-list 'treesit-extra-load-path
+             (expand-file-name "~/.emacs.d/tree-sitter"))
+
+(setq treesit-font-lock-level 4) ;; default=3?
+
+;; emacsのABIは14
 (setq treesit-language-source-alist
       '((json "https://github.com/tree-sitter/tree-sitter-json")
         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-        (rust "https://github.com/tree-sitter/tree-sitter-rust")
+        (rust "https://github.com/tree-sitter/tree-sitter-rust" "v0.23.3")
         (toml "https://github.com/tree-sitter/tree-sitter-toml")
         (make "https://github.com/alemuller/tree-sitter-make")
         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-        (bash "https://github.com/tree-sitter/tree-sitter-bash")
+        (bash "https://github.com/tree-sitter/tree-sitter-bash" "v0.23.3")
         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-        (go "https://github.com/tree-sitter/tree-sitter-go")
-        (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "v0.23.1")
+        (go "https://github.com/tree-sitter/tree-sitter-go" "v0.23.3")
+        (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "v1.1.0")
         (python "https://github.com/tree-sitter/tree-sitter-python" "v0.23.3")
         ))
 
@@ -1531,51 +1781,6 @@
   :bind
   ("C-h" . treesit-fold-toggle)
   )
-
-
-(use-package flymake
-  :diminish
-  :hook ((prog-mode
-          conf-mode) . flymake-mode)
-  :config
-  (setq flymake-no-changes-timeout 0.5)
-  :init (setq flymake-no-changes-timeout nil
-              flymake-fringe-indicator-position 'right-fringe
-              flymake-margin-indicator-position 'right-margin)
-  )
-(use-package flymake-popon
-  :diminish
-  :custom-face
-  (flymake-popon ((t :inherit default :height 0.85)))
-  ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
-  :hook (flymake-mode . flymake-popon-mode)
-  :init (setq flymake-popon-width 80))
-
-
-(use-package reformatter
-  :ensure t
-  :config
-  (reformatter-define go-format
-    :program "goimports")
-  (reformatter-define web-format
-    :program "prettier"
-    :args `("--write" "--stdin-filepath" ,buffer-file-name))
-  (reformatter-define python-format
-    :program "ruff"
-    :args `("format" "--stdin-filename" ,buffer-file-name))
-  (reformatter-define ruff-format
-    :program "ruff"
-    :args '("format" "-"))
-  :hook
-  (go-ts-mode . go-format-on-save-mode)
-  (typescript-ts-mode . web-format-on-save-mode)
-  (tsx-ts-mode . web-format-on-save-mode)
-  (json-ts-mode . web-format-on-save-mode)
-  ;;(python-ts-mode . python-format-on-save-mode)
-  (python-ts-mode . ruff-format-on-save-mode)
-  )
-(let ((elapsed (float-time (time-subtract (current-time) start-time))))
-  (message "code: %.3f" elapsed))
 ;;; -------- code ---------------------------------
 
 
@@ -1587,8 +1792,10 @@
       '((python-mode . python-ts-mode)))
 ;; (add-hook 'python-mode-hook #'eglot-ensure)
 ;; (add-hook 'python-ts-mode-hook #'eglot-ensure)
-(use-package flymake-ruff
-  :hook (python-ts-mode . flymake-ruff-load))
+
+;; eglotのflymakeに任せる
+;; (use-package flymake-ruff
+;;   :hook (python-ts-mode . flymake-ruff-load))
 ;;; -----------------------------------------
 
 
@@ -1605,9 +1812,236 @@
 (add-hook 'tsx-ts-hook #'eglot-ensure)
 ;;; -----------------------------------------
 
+;;; --------- jsx --------------------------------
+;; (add-to-list 'auto-mode-alist '("\\.js\\'" . js-ts-mode))
+;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-ts-mode))
+
+;; reformatterでglobal-prettier-formatをdefineすることでglobal-prettier-format-bufferが登録される
+;; save-hookはreformatterを使わず手動で設定する
+(add-hook 'js-ts-mode-hook #'my/enable-prettier-on-save)
+
+;; jsではeglot(tsserver)のflymakeが動かないので、flymake-eslintを使う
+;; flymake-collectionのflymake-collection-eslintではエラーがでるので、
+(use-package flymake-eslint
+  :straight '(flymake-eslint :type git :host github :repo "orzechowskid/flymake-eslint")
+  :custom
+  ;; プロジェクトローカル eslint を使いたいなら npx が安定
+  (flymake-eslint-executable '("npx" "eslint")) ;; or ("npm" "exec" "--" "eslint")
+  (flymake-eslint-prefer-json-diagnostics t)
+  )
+
+(use-package jtsx
+  :ensure t
+  :mode (("\\.js\\'" . jtsx-jsx-mode)
+         ("\\.jsx\\'" . jtsx-jsx-mode)
+         ("\\.tsx\\'" . jtsx-tsx-mode)
+         ("\\.ts\\'" . jtsx-typescript-mode))
+  :commands jtsx-install-treesit-language
+  :hook ((jtsx-jsx-mode . hs-minor-mode)
+         (jtsx-tsx-mode . hs-minor-mode)
+         (jtsx-typescript-mode . hs-minor-mode))
+  ;; :custom
+  ;; Optional customizations
+  ;; (js-indent-level 2)
+  ;; (typescript-ts-mode-indent-offset 2)
+  ;; (jtsx-switch-indent-offset 0)
+  ;; (jtsx-indent-statement-block-regarding-standalone-parent nil)
+  ;; (jtsx-jsx-element-move-allow-step-out t)
+  ;; (jtsx-enable-jsx-electric-closing-element t)
+  ;; (jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+  ;; (jtsx-enable-jsx-element-tags-auto-sync nil)
+  ;; (jtsx-enable-all-syntax-highlighting-features t)
+  :config
+  (defun jtsx-bind-keys-to-mode-map (mode-map)
+    "Bind keys to MODE-MAP."
+    (define-key mode-map (kbd "C-c C-j") 'jtsx-jump-jsx-element-tag-dwim)
+    (define-key mode-map (kbd "C-c j o") 'jtsx-jump-jsx-opening-tag)
+    (define-key mode-map (kbd "C-c j c") 'jtsx-jump-jsx-closing-tag)
+    (define-key mode-map (kbd "C-c j r") 'jtsx-rename-jsx-element)
+    (define-key mode-map (kbd "C-c <down>") 'jtsx-move-jsx-element-tag-forward)
+    (define-key mode-map (kbd "C-c <up>") 'jtsx-move-jsx-element-tag-backward)
+    (define-key mode-map (kbd "C-c C-<down>") 'jtsx-move-jsx-element-forward)
+    (define-key mode-map (kbd "C-c C-<up>") 'jtsx-move-jsx-element-backward)
+    (define-key mode-map (kbd "C-c C-S-<down>") 'jtsx-move-jsx-element-step-in-forward)
+    (define-key mode-map (kbd "C-c C-S-<up>") 'jtsx-move-jsx-element-step-in-backward)
+    (define-key mode-map (kbd "C-c j w") 'jtsx-wrap-in-jsx-element)
+    (define-key mode-map (kbd "C-c j u") 'jtsx-unwrap-jsx)
+    (define-key mode-map (kbd "C-c j d n") 'jtsx-delete-jsx-node)
+    (define-key mode-map (kbd "C-c j d a") 'jtsx-delete-jsx-attribute)
+    (define-key mode-map (kbd "C-c j t") 'jtsx-toggle-jsx-attributes-orientation)
+    (define-key mode-map (kbd "C-c j h") 'jtsx-rearrange-jsx-attributes-horizontally)
+    (define-key mode-map (kbd "C-c j v") 'jtsx-rearrange-jsx-attributes-vertically))
+
+  (defun jtsx-bind-keys-to-jtsx-jsx-mode-map ()
+      (jtsx-bind-keys-to-mode-map jtsx-jsx-mode-map))
+
+  (defun jtsx-bind-keys-to-jtsx-tsx-mode-map ()
+      (jtsx-bind-keys-to-mode-map jtsx-tsx-mode-map))
+
+  (add-hook 'jtsx-jsx-mode-hook 'jtsx-bind-keys-to-jtsx-jsx-mode-map)
+  (add-hook 'jtsx-tsx-mode-hook 'jtsx-bind-keys-to-jtsx-tsx-mode-map))
+;;; --------- jsx --------------------------------
+
+
 ;;; --------- golang ------------------------
 (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
 ;;; -----------------------------------------
 
+
+
+;;; --------- format ------------------------
+(use-package reformatter
+  :ensure t
+  :config
+  (reformatter-define go-format
+    :program "goimports")
+  (reformatter-define global-prettier-format
+    :program "prettier"
+    :args `("--stdin-filepath" ,(buffer-file-name))
+    :lighter " PrettierFmt")
+  (reformatter-define python-format
+    :program "ruff"
+    :args `("format" "--stdin-filename" ,buffer-file-name))
+  (reformatter-define ruff-format
+    :program "ruff"
+    :args '("format" "-"))
+  (reformatter-define json-format
+    :program "jq"
+    :args '(".")
+    :lighter " JSONFmt")
+
+  :hook
+  (go-ts-mode . go-format-on-save-mode)
+  (typescript-ts-mode . global-prettier-format-on-save-mode)
+  (tsx-ts-mode . global-prettier-format-on-save-mode)
+  ;;(python-ts-mode . python-format-on-save-mode)
+  (python-ts-mode . ruff-format-on-save-mode)
+  (json-mode-hook . json-format-on-save-mode)
+  (json-ts-mode . json-format-on-save-mode)
+  ;; (js-ts-mode . web-format-on-save-mode)
+  ;; (js-ts-mode . prettier-format-on-save-mode)
+  )
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "code: %.3f" elapsed))
+;;; --------- format ------------------------
+
+
+;;; ---------- flymake ----------------------
+(use-package flymake
+  :diminish
+  :init (setq flymake-no-changes-timeout nil
+              flymake-fringe-indicator-position 'right-fringe
+              flymake-margin-indicator-position 'right-margin)
+  :config
+  (add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode 1)))
+  (setq flymake-log-level 3)
+  )
+;; flymake backendの追加
+(add-hook 'eglot-managed-mode-hook #'my/eglot-flymake-enable)
+
+;; js/tsではeglot(tsserver)のflymakeが動かないので、flymake backendにeslintを使う
+;; flymake-collectionのflymake-collection-eslintではエラーがでるので、
+;; flymake-eslint packageの方を使う
+;; ただし、flymake-collectionは他にも多言語用の実装があるので、必要があれば使う
+;; M-: flymake-diagnostic-functions
+;; (use-package flymake-collection
+;;   :hook ((after-init . flymake-collection-hook-setup)
+;;          ((tsx-ts-mode
+;;            js-ts-mode
+;;            jtsx-jsx-mode
+;;            jtsx-tsx-mode
+;;            jtsx-typescript-mode) . (lambda () (add-to-list 'flymake-diagnostic-functions #'flymake-collection-eslint)))
+;;          ;;(eglot-managed-mode . (lambda () (add-to-list 'flymake-diagnostic-functions #'eglot-flymake-backend)))
+;;          )
+;;   )
+;; popupはeldocに任せる
+;; (use-package flymake-popon
+;;   :diminish
+;;   :custom-face
+;;   (flymake-popon ((t :inherit default :height 0.85)))
+;;   ;;(flymake-popon-posframe-border ((t :foreground ,(face-background 'posframe-border nil t))))
+;;   :hook (flymake-mode . flymake-popon-mode)
+;;   :init (setq flymake-popon-width 80)
+;;   :config
+;;   (add-hook 'eglot-managed-mode-hook #'flymake-mode)
+;;   )
+;;; ---------- flymake ----------------------
+
+
+;;; --------- llm--- ------------------------
+(use-package gptel
+  :config
+  (require 'gptel-integrations)
+  ;;(require 'gptel-org)
+  (setq
+   gptel-default-mode 'org-mode
+   gptel-model 'qwen3:8b
+   gptel-backend (gptel-make-ollama "Ollama"
+                                    :host "172.22.1.15:11434"
+                                    :stream t
+                                    :models '(qwen3:0.6b qwen3:4b qwen3:8b))
+   )
+  (gptel-make-ollama "Ao-Chat"
+    :host "127.0.0.1:8181"
+    :stream t
+    :models '(ao))
+   gptel-use-curl t
+   gptel-use-tools t
+   gptel-stream	t
+   gptel-max-tokens	4096
+   gptel-temperature 0
+   gptel-use-context t
+   gptel-confirm-tool-calls 'always
+   gptel-include-tool-results t ;;'auto
+   gptel-log-level "debug"
+   gptel--system-message (concat gptel--system-message " Make sure to use Japanese language.")
+  )
+
+;; --- mcp-lsp ---
+;; go install github.com/isaacphi/mcp-language-server@latest
+;; mcp-language-server --workspace /home/issei/mcp_workspace/lsp --lsp language-server-executable
+;; --- firecrawl-mcp ---
+;; git clone https://github.com/firecrawl/firecrawl-mcp-server.git
+;; npm run build
+(defvar GOBINPATH '(concat (getenv "GOPATH") "/bin"))
+(use-package mcp
+  :after gptel
+  :custom
+  (mcp-hub-servers
+   `(
+     ;; ("mcp-go-lsp" . (
+     ;;                  :command "mcp-language-server"
+     ;;                           :args ("--workspace" "/home/issei/prog/go/src/mcp-language-server" "--lsp" "gopls")
+     ;;                           :env (:PATH "/home/issei/.goenv/shims/go:/home/issei/go/1.25.4/bin/" :GOPATH (getenv "GOPATH"))
+     ;;                                )
+     ;;  )
+     ;; ;; ("duckduckgo" . (:command "uvx" :args ("duckduckgo-mcp-server")))
+     ;; ;; ("firecrawl-mcp" . (:command "npx" :args ("-y" "firecrawl-mcp", "2>" "~/prog/mcp/firecrawl-mcp-server/mcp_server.log") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
+     ;; ("firecrawl-mcp" . (
+     ;;                     :command "npm"
+     ;;                              :args ("--silent" "--prefix" "~/prog/mcp/firecrawl-mcp-server" "run" "start")
+     ;;                              :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "http://172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false"))
+     ;;  )
+    ;; ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
+     ;; ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+     ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem") :roots (getenv "HOME")))
+     ;; ("sequential-thinking" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-sequential-thinking")))
+     ;; ;;("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
+     ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     ;; ("code-agent" . (:command
+     ;;                  "/home/issei/prog/mcp/code-deep-researcher/.venv/bin/python"
+     ;;                  :args ("run_as_mcp.py")
+     ;;                  :env (:project_root "/home/issei/prog/mcp/chat-llm-v3")
+     ;;                  ))
+     ;; ("code-agent-sse" . (:url "http://localhost:8000/mcp"))
+     ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     )
+   )
+
+  :config
+  (require 'mcp-hub)
+  ;; (setq mcp-log-level "debug")
+  :hook (after-init . mcp-hub-start-all-server))
+;;; -----------------------------------------
 
 ;;; post-init.el ends here

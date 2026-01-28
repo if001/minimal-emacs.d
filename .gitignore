@@ -12,3 +12,11 @@ autosave/
 transient/
 straight/
 tree-sitter/
+elpa/
+
+elpa/
+tramp
+tramp-autosave/
+projects
+myconf.elc
+bookmarks
