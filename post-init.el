@@ -293,9 +293,11 @@
           (comment           fg-dim)
           (operator          blue-faint)
           (keyword           orange) ;; オレンジ
-          (builtin           fg-main) ;; GitHub 文字色
-          (variable          fg-main) ;; GitHub 文字色
-          (type              fg-main) ;; GitHub 文字色
+          (builtin           cyan-intense)
+          ;; (builtin           fg-main)
+          ;; (builtin           orange)
+          (variable          fg-main)
+          (type              fg-main)
 
           (property          blue-warmer)
           (string            fg-alt)
@@ -330,6 +332,11 @@
 (use-package doom-modeline
   :ensure t
   :hook (after-init . doom-modeline-mode))
+(use-package hide-mode-line
+  :ensure nil
+  :hook
+  ((neotree-mode imenu-list-major-mode) . hide-mode-line-mode)
+  )
 
 (use-package nerd-icons)
 
@@ -494,6 +501,7 @@
 ;; 行番号表示
 (global-display-line-numbers-mode 1) ;; グローバル
 ;; 絶対行番号（デフォルト）
+(display-line-numbers-mode t)
 (setq display-line-numbers-type t)
 
 ;; camelCase単位で移動する
@@ -686,8 +694,10 @@
   (corfu-separator ?\s) ; Separator for candidates
   (corfu-popupinfo-delay 0.5) ; Delay for popup info
   (corfu-scroll-margin 3) ; Scroll margin
-  (corfu-min-width 10) ; Minimum width of completion window
+  (corfu-min-width 100) ; Minimum width of completion window
+  (corfu-max-width 100) ; Minimum width of completion window
   (corfu-max-height 15) ; Maximum height of completion window
+
 
   ;; Enable Corfu
   :config
@@ -990,6 +1000,8 @@
   ;; flymake-collectionのdiagnostic-functionsを使うようにする
   ;; M-: flymake-diagnostic-functions
   ;; (add-to-list 'eglot-stay-out-of 'flymake)
+  ;; eglotはimenu-listを上書きする. 上書きするとfunction/structなどの構造がフラットになるため、eglotのimenu-listは使わない
+  (add-to-list 'eglot-stay-out-of 'imenu)
 
   ;; language serverを追加する場合はここに追加していく
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
@@ -1147,6 +1159,19 @@
   ;; saved file, the cursor remains in the same position, ensuring a consistent
   ;; editing experience without affecting cursor placement.
   (stripspace-restore-column t))
+
+
+(use-package imenu-list
+  :ensure t
+  :bind
+  ("<f9>" . imenu-list-smart-toggle)
+  :custom
+  (imenu-list-size 0.3)
+  :config
+  ;; line nuberを表示しない
+  (add-hook 'imenu-list-major-mode-hook (lambda () (display-line-numbers-mode -1)))
+  )
+(advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry)
 ;;; -------------------------------------------------------
 
 
@@ -1183,12 +1208,14 @@
   (global-set-key (kbd "C-c <right>") #'buf-move-right)
   )
 
+;; imenu-listと相性が悪いので一旦OFF
 (use-package zoom
   :config
-  (zoom-mode 1)
-  (setq zoom-size '(0.6 . 0.6))
+  (zoom-mode -1)
+  (setq zoom-size '(0.8 . 0.2))
   (custom-set-variables
    '(zoom-ignored-major-modes '(neotree-mode))
+   ;; '(zoom-ignored-buffer-names '("*Ilist*"))
    )
   )
 ;;; ----- window ----------------------------------------
@@ -1586,6 +1613,8 @@
   (neo-window-fixed-size nil) ;; 幅を調節できるようにする
   (neo-show-hidden-files t) ;; デフォルトで隠しファイル表示
   ;; (after-save-hook 'neotree-refresh)
+  ;; line-numberを表示しない
+  (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
   :bind
   ("M-<up>" . enlarge-window-horizontally) ;;広げる
   ("M-<down>" . shrink-window-horizontally) ;; 狭くする
@@ -1609,8 +1638,9 @@
 ;; 不要なモードラインを消す
 (use-package hide-mode-line
   :hook
-  ;; ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode))
-  ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode))
+  ;; ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode)
+  ((neotree-mode) . hide-mode-line-mode)
+  )
 
 ;; 以下 usage
 ;; Shortcut (Only in Neotree Buffer)
