@@ -330,6 +330,11 @@
 (use-package doom-modeline
   :ensure t
   :hook (after-init . doom-modeline-mode))
+(use-package hide-mode-line
+  :ensure nil
+  :hook
+  ((neotree-mode imenu-list-major-mode) . hide-mode-line-mode)
+  )
 
 (use-package nerd-icons)
 
@@ -1609,8 +1614,9 @@
 ;; 不要なモードラインを消す
 (use-package hide-mode-line
   :hook
-  ;; ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode))
-  ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode))
+  ;; ((neotree-mode imenu-list-minor-mode) . hide-mode-line-mode)
+  ((neotree-mode) . hide-mode-line-mode)
+  )
 
 ;; 以下 usage
 ;; Shortcut (Only in Neotree Buffer)
