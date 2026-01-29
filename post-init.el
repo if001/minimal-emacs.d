@@ -1002,16 +1002,21 @@
   ;; M-: flymake-diagnostic-functions
   ;; (add-to-list 'eglot-stay-out-of 'flymake)
   ;; eglotはimenu-listを上書きする. 上書きするとfunction/structなどの構造がフラットになるため、eglotのimenu-listは使わない
-  (add-to-list 'eglot-stay-out-of 'imenu)
+  ;; (add-to-list 'eglot-stay-out-of 'imenu)
 
   ;; language serverを追加する場合はここに追加していく
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio" "--log-level" "trace"))) ;;python用
   (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
+  ;; (add-to-list 'eglot-server-programs
+  ;;              '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
+  ;; (add-to-list 'eglot-server-programs
+  ;;              '(js-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "1"))) ;; jsx-ts-mode
   (add-to-list 'eglot-server-programs
-               '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
+               '(jtsx-tsx-mode . my/eglot-ts-server-path))
   (add-to-list 'eglot-server-programs
-               '(js-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "1"))) ;; jsx-ts-mode
+               '(jtsx-jsx-mode . my/eglot-ts-server-path))
+
   (add-to-list 'eglot-server-programs
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
