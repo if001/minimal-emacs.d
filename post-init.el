@@ -1587,7 +1587,9 @@
 
 ;;; -------- magit ---------------------------------
 (setq package-start-time (current-time))
-(use-package magit)
+;; (use-package magit
+;;     :straight (magit :type git :host nil :repo "https://github.com/magit/magit.git" :tag "v4.4.2")
+;;   )
 ;; (global-set-key (kbd "C-x g") 'magit-status)
 
 ;; (use-package git-gutter-fringe
