@@ -98,7 +98,7 @@ Each entry is a directory name like \"app\" or \"frontend\"."
                     "node_modules/typescript/lib/tsserver.js" root)))))
       (seq-find #'file-exists-p candidates))))
 
-(defun my-eglot-typescript-contact (&optional _interactive)
+(defun my/eglot-ts-server-path (&optional _interactive)
   "typescript-language-server の起動コマンドを返す.
 `my-tsserver-subdirs` で指定されたディレクトリを優先的に探して
 対応する tsserver.js を使う。"
@@ -117,9 +117,9 @@ Each entry is a directory name like \"app\" or \"frontend\"."
   (when-let ((proj (project-current nil)))
     (project-root proj)))
 
-(defun my/prepend-node-modules-bin-to-path ()
+(defun my/prepend-node-modules-bin-to-path (root)
   "バッファの project root の node_modules/.bin を PATH/exec-path の先頭に挿す。"
-  (when-let* ((root (my/project-root))
+  (when-let* (
               (bin  (expand-file-name "node_modules/.bin" root)))
     (when (file-directory-p bin)
       ;; exec-path は Emacs 内でコマンド探索に使う
@@ -135,8 +135,11 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 
 
 (defun my/enable-prettier-on-save ()
-  (my/prepend-node-modules-bin-to-path)
-  ;; project-local prettier が見つかる場合だけ有効化したいならチェックも可
+  ;; project_rootを追加
+  (my/prepend-node-modules-bin-to-path (my/project-root))
+  ;; project_root/appも追加
+  (my/prepend-node-modules-bin-to-path (concat (my/project-root) "app"))
+
   (when (executable-find "prettier")
     (add-hook 'before-save-hook #'global-prettier-format-buffer nil t)))
 ;;; -------------node_modules/.bin/prettier実行用 -----------------
@@ -150,8 +153,11 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 
    ;; js/jsx/ts/tsx
    ((derived-mode-p 'js-ts-mode 'typescript-ts-mode 'jtsx-jsx-mode 'jtsx-tsx-mode 'jtsx-typescript-mode)
-    (my/prepend-node-modules-bin-to-path)
-    (setq-local flymake-eslint-project-root (my/project-root))
+    ;; project_rootを追加
+    (my/prepend-node-modules-bin-to-path (my/project-root))
+    ;; project_root/appも追加
+    (my/prepend-node-modules-bin-to-path (concat (my/project-root) "app"))
+    ;; (setq-local flymake-eslint-project-root (my/project-root))
     (flymake-eslint-enable)
     )
 
@@ -214,5 +220,81 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 ;; (advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry))
 ;;; ------------- imenu listにnerd iconを使う -----------------
 
+
+;;; ------------- org helper -----------------
+(defun my-list-subdirectories (dir)
+  "指定したディレクトリ DIR の直下にあるディレクトリのリストを返します。"
+  (let ((files (directory-files dir t nil))) ;; t で絶対パス、nil でソート
+    (cl-loop for file in files
+             when (and (file-directory-p file)
+			           (not (string-equal (file-name-nondirectory file) "."))
+			           (not (string-equal (file-name-nondirectory file) "..")))
+             collect (concat file "/")
+	         )
+    )
+  )
+
+
+ (defun yy-mm-file (base-dir file-prefix)
+    "Generate a file name like 'YYYY-MM-PREFIX.org' in BASE-DIR."
+    (let* ((now (current-time))
+           (year (format-time-string "%Y" now))
+           (month (format-time-string "%m" now))
+           (full-dir (expand-file-name base-dir)))
+      (unless (file-directory-p full-dir) ;; ディレクトリが存在しない場合は作成
+	(make-directory full-dir t))
+      ;; ファイル名を生成
+      (expand-file-name (format "%s-%s-%s.org" year month file-prefix) full-dir)))
+
+  (defun yy-mm-dd-file (base-dir file-prefix)
+    "Generate a file name like 'YYYY-MM-DD-PREFIX.org' in BASE-DIR."
+    (let* ((now (current-time))
+           (year (format-time-string "%Y" now))
+           (month (format-time-string "%m" now))
+	   (day (format-time-string "%d" now))
+           (full-dir (expand-file-name base-dir)))
+      (unless (file-directory-p full-dir) ;; ディレクトリが存在しない場合は作成
+	(make-directory full-dir t))
+      ;; ファイル名を生成
+      (expand-file-name (format "%s-%s-%s-%s.org" year month day file-prefix) full-dir)))
+
+;; orgの検索用
+(defun my/org-date-string (days-offset)
+  "Return date string like '2025-07-01' offset by DAYS-OFFSET from today."
+  (format-time-string "%Y-%m-%d"
+                      (time-add (current-time)
+                                (days-to-time days-offset)))
+  )
+
+;; プロパティから時刻文字列を取得し、Emacsの内部時刻形式に変換
+(defun my/org-parse-created-timestamp ()
+  "Parse CREATED property as a time value, or nil if not present or invalid."
+  (let ((ts (org-entry-get nil "CREATED")))
+    (when ts
+      (condition-case nil
+          (encode-time (parse-time-string ts))
+        (error nil)))))  ;; エラー時は nil を返す
+
+;; 指定した日数前より後かどうかをチェック
+(defun my/org-created-after-days-ago-p (days)
+  "Return non-nil if the CREATED property is within the last DAYS days."
+  (let ((cutoff (time-subtract (current-time) (days-to-time days))))
+    (let ((created-time (my/org-parse-created-timestamp)))
+      (and created-time
+           (time-less-p cutoff created-time)))))
+
+;; 今日作成されたかチェック
+(defun my/org-created-today-p ()
+  "Return non-nil if CREATED property is today."
+  (let* ((created-time (my/org-parse-created-timestamp))
+         (now (current-time)))
+    (when created-time
+      (let ((created-date (decode-time created-time))
+            (now-date (decode-time now)))
+        (and (= (nth 3 created-date) (nth 3 now-date))   ;; day
+             (= (nth 4 created-date) (nth 4 now-date))   ;; month
+             (= (nth 5 created-date) (nth 5 now-date))))))) ;; year
+;;; ------------- org helper -----------------
+(message "loaded myconf.el")
 
 ;;; myconf.el ends here
