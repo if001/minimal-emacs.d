@@ -5,6 +5,7 @@
 
 
 (minimal-emacs-load-user-init "myconf.el")
+(minimal-emacs-load-user-init "local-conf.el")
 
 ;;; ------------- Native Compilation -----------------
 ;; Native compilation enhances Emacs performance by converting Elisp code into
@@ -1344,87 +1345,15 @@
   (setq org-fontify-done-headline nil)
   (setq work-directory "~/prog/org/")
   :config
-  (setq listfile (concat work-directory "list.org"))
-  (setq chatfile (concat work-directory "chats.org"))
-  (setq ideafile (concat work-directory "idea/idea.org"))
-
-  (defun yy-mm-file (base-dir file-prefix)
-    "Generate a file name like 'YYYY-MM-PREFIX.org' in BASE-DIR."
-    (let* ((now (current-time))
-           (year (format-time-string "%Y" now))
-           (month (format-time-string "%m" now))
-           (full-dir (expand-file-name base-dir)))
-      (unless (file-directory-p full-dir) ;; ディレクトリが存在しない場合は作成
-	(make-directory full-dir t))
-      ;; ファイル名を生成
-      (expand-file-name (format "%s-%s-%s.org" year month file-prefix) full-dir)))
-
-  (defun yy-mm-dd-file (base-dir file-prefix)
-    "Generate a file name like 'YYYY-MM-DD-PREFIX.org' in BASE-DIR."
-    (let* ((now (current-time))
-           (year (format-time-string "%Y" now))
-           (month (format-time-string "%m" now))
-	   (day (format-time-string "%d" now))
-           (full-dir (expand-file-name base-dir)))
-      (unless (file-directory-p full-dir) ;; ディレクトリが存在しない場合は作成
-	(make-directory full-dir t))
-      ;; ファイル名を生成
-      (expand-file-name (format "%s-%s-%s-%s.org" year month day file-prefix) full-dir)))
-
-  ;; (setq taskfile (yy-mm-file (concat work-directory "tasks/") "task"))
-  ;; (setq laterfile (yy-mm-file (concat work-directory "later/") "later"))
-  ;; (setq techfile (yy-mm-dd-file (concat work-directory "tech/") "tech"))
-
-  (setq memofile (yy-mm-file (concat work-directory "todo/") "todo"))
-  (setq memofile (yy-mm-file (concat work-directory "memo/") "memo"))
-  (setq chatfile (yy-mm-dd-file (concat work-directory "chat/") "chat"))
-  (setq fefile (yy-mm-file (concat work-directory "fe/") "fe"))
-  (setq matsuo-lab-file (yy-mm-dd-file (concat work-directory "matsuo-lab-llm-compe/") "matsuo-lab-llm-compe"))
-
-
-  (setq org-capture-templates
-	'(
-	  ;; タスク
-	  ("t" "task" entry (file memofile)
-	   "** TODO %? :todo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: task \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  ("l" "あとで読む" entry (file memofile)
-           "** %? :later: \n:PROPERTIES:\n:CREATED: %U\n:TAG: later \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  ("a" "Any Idea" entry (file memofile)
-           "** %? :any: \n:PROPERTIES:\n:CREATED: %U\n:TAG: any \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  ("i" "Tech memo" entry (file memofile)
-           "** %? :tech: \n:PROPERTIES:\n:CREATED: %U\n:TAG: tech \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  ;; ("m" "Memo" entry (file+headline memofile "Memo")
-      ;;  "* %? :memo: \n  :PROPERTIES:\n  :CREATED: %U\n  :TAG: memo\n  :END:\n  %i\n  %a\n" :empty-lines 1)
-      ("m" "Memo" entry (file memofile)
-       "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n" :empty-lines 1 :tree-type day)
-	  ("e" "emacs" entry (file memofile)
-           "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n%a\n" :empty-lines 1 :tree-type month)
-	  ("p" "Pepar" entry (file memofile)
-           "** %? :pepar: \n:PROPERTIES:\n:CREATED: %U\n:TAG: pepar \n:END:\n%i\n%a\n" :empty-lines 1 :tree-type month)
-
-
-	  ;; ("m" "Memo" entry (file+olp+datetree datetreefile)
-          ;;  "** %<%m-%d(%a) %H:%M>\n#+filetags: :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: :memo: \n:END:\n%?\n%i\n%a\n" :empty-lines 1 :tree-type month)
-	  ("s" "matsuo-lab-llm-compe" entry (file matsuo-lab-file)
-           "** %? :llm_compe: \n:PROPERTIES:\n:CREATED: %U\n:TAG: llm_compe \n:END:\n%i\n%a\n" :empty-lines 1 :tree-type month)
-	  ("c" "chats" entry (file+headline chatfile "Chats")
-	   "** %? :chat: \n\n:PROPERTIES:\n:CREATED: %U\n:TAG: chat\n:END:\n%i\n" :empty-lines 1)
-	  ("f" "FE memo" entry (file fefile)
-           "* %? :fe: \n:PROPERTIES:\n:CREATED: %U\n:TAG: fe \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  )
-	)
+  ;; (setq memofile (yy-mm-file (concat work-directory "memo/") "memo"))
+  ;; (setq org-capture-templates
+  ;;   '(
+  ;;     ("m" "Memo" entry (file memofile)
+  ;;      "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n" :empty-lines 1 :tree-type day)
+  ;;     )
+  ;;   )
 
   ;; agendaの設定
-  (defun my-list-subdirectories (dir)
-    "指定したディレクトリ DIR の直下にあるディレクトリのリストを返します。"
-    (let ((files (directory-files dir t nil))) ;; t で絶対パス、nil でソート
-      (cl-loop for file in files
-               when (and (file-directory-p file)
-			 (not (string-equal (file-name-nondirectory file) "."))
-			 (not (string-equal (file-name-nondirectory file) "..")))
-               collect (concat file "/")
-	       )
-      ))
   (setq org-agenda-files (my-list-subdirectories work-directory))
   ;;(setq org-agenda-files '("~/prog/org/memo/"))
   ;; (message org-agenda-files)
@@ -1435,43 +1364,6 @@
 	  )
 	)
   )
-
-;; orgの検索用
-(defun my/org-date-string (days-offset)
-  "Return date string like '2025-07-01' offset by DAYS-OFFSET from today."
-  (format-time-string "%Y-%m-%d"
-                      (time-add (current-time)
-                                (days-to-time days-offset)))
-  )
-
-;; プロパティから時刻文字列を取得し、Emacsの内部時刻形式に変換
-(defun my/org-parse-created-timestamp ()
-  "Parse CREATED property as a time value, or nil if not present or invalid."
-  (let ((ts (org-entry-get nil "CREATED")))
-    (when ts
-      (condition-case nil
-          (encode-time (parse-time-string ts))
-        (error nil)))))  ;; エラー時は nil を返す
-
-;; 指定した日数前より後かどうかをチェック
-(defun my/org-created-after-days-ago-p (days)
-  "Return non-nil if the CREATED property is within the last DAYS days."
-  (let ((cutoff (time-subtract (current-time) (days-to-time days))))
-    (let ((created-time (my/org-parse-created-timestamp)))
-      (and created-time
-           (time-less-p cutoff created-time)))))
-
-;; 今日作成されたかチェック
-(defun my/org-created-today-p ()
-  "Return non-nil if CREATED property is today."
-  (let* ((created-time (my/org-parse-created-timestamp))
-         (now (current-time)))
-    (when created-time
-      (let ((created-date (decode-time created-time))
-            (now-date (decode-time now)))
-        (and (= (nth 3 created-date) (nth 3 now-date))   ;; day
-             (= (nth 4 created-date) (nth 4 now-date))   ;; month
-             (= (nth 5 created-date) (nth 5 now-date))))))) ;; year
 
 (use-package org-ql
   :after org
