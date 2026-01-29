@@ -1218,12 +1218,24 @@
 (use-package zoom
   :config
   (zoom-mode -1)
-  (setq zoom-size '(0.8 . 0.2))
+  (setq zoom-size '(0.612 . 0.612))
   (custom-set-variables
    '(zoom-ignored-major-modes '(neotree-mode))
    ;; '(zoom-ignored-buffer-names '("*Ilist*"))
    )
   )
+(with-eval-after-load 'ace-window
+  (defun my/after-jump-window (&rest _args)
+    "ace-windowで移動した直後、移動先windowのbufferで処理する。"
+    (with-current-buffer (window-buffer (selected-window))
+      (unless (member (buffer-name) '("*Ilist*"))
+            (zoom)
+            )
+      ))
+  (advice-add 'ace-window :after #'my/after-jump-window)
+  )
+(add-hook 'window-selection-change-functions #'my/after-jump-window)
+
 ;;; ----- window ----------------------------------------
 
 
