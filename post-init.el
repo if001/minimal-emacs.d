@@ -5,6 +5,7 @@
 
 
 (minimal-emacs-load-user-init "myconf.el")
+(minimal-emacs-load-user-init "local-conf.el")
 
 ;;; ------------- Native Compilation -----------------
 ;; Native compilation enhances Emacs performance by converting Elisp code into
@@ -270,6 +271,73 @@
           (bg-inactive      "#e0e0e0")
           (border           "#9f9f9f")
 
+          ;; ef-light
+          (red "#d3303a")
+          (red-warmer "#e00033")
+          (red-cooler "#d51272")
+          (red-faint "#c24552")
+          (green "#217a3c")
+          (green-warmer "#4a7d00")
+          (green-cooler "#008858")
+          (green-faint "#61756c")
+          (yellow "#a45f22")
+          (yellow-warmer "#b6532f")
+          (yellow-cooler "#b65050")
+          (yellow-faint "#a65f6a")
+          (blue "#3740cf")
+          (blue-warmer "#4250ef")
+          (blue-cooler "#065fff")
+          (blue-faint "#4f54aa")
+          (magenta "#ba35af")
+          (magenta-warmer "#cf25aa")
+          (magenta-cooler "#6052cf")
+          (magenta-faint "#af5a80")
+          (cyan "#1f6fbf")
+          (cyan-warmer "#3f6faf")
+          (cyan-cooler "#1f77bb")
+          (cyan-faint "#506fa0")
+
+          (bg-red-intense "#ff8f88")
+          (bg-green-intense "#9adf90")
+          (bg-yellow-intense "#fac200")
+          (bg-blue-intense "#cbcfff")
+          (bg-magenta-intense "#df8fff")
+          (bg-cyan-intense "#88c8ff")
+
+          (bg-red-subtle "#ffcfbf")
+          (bg-green-subtle "#b3fabf")
+          (bg-yellow-subtle "#fff576")
+          (bg-blue-subtle "#ccdfff")
+          (bg-magenta-subtle "#ffddff")
+          (bg-cyan-subtle "#bfefff")
+
+          (bg-added "#d0f0d0")
+          (bg-added-faint "#e5ffe5")
+          (bg-added-refine "#b2e8be")
+          (fg-added "#005000")
+
+          (bg-changed "#f4e8bd")
+          (bg-changed-faint "#f9efcb")
+          (bg-changed-refine "#efd299")
+          (fg-changed "#553d00")
+
+          (bg-removed "#ffd8d5")
+          (bg-removed-faint "#ffe9e9")
+          (bg-removed-refine "#f3b5af")
+          (fg-removed "#8f1313")
+
+          (bg-mode-line-active "#b7c7ff")
+          (fg-mode-line-active "#151515")
+          (bg-completion "#bfe8ff")
+          (bg-hover "#aaeccf")
+          (bg-hover-secondary "#ccbfff")
+          (bg-hl-line "#e4efd8")
+          (bg-paren-match "#dfa0f3")
+          (bg-err "#ffd5ea") ; check with err
+          (bg-warning "#ffeabb") ; check with warning
+          (bg-info "#d0efda")
+          ;; ef-light
+
           ;; (blue-cooler      "#9EECFF") ;; Blue 1
           ;; (blue             "#3094FF") ;; Blue 2
           ;; (blue-warmer      "#1A61FE") ;; Blue 3
@@ -285,7 +353,7 @@
           ;; Special purpose
           (bg-region         yellow-light)
           (bg-tab-current    bg-main)
-          (bg-hover                    bg-cyan-intense)
+          (bg-hover          bg-cyan-intense)
           ;; General mappings
           (cursor            fg-dim)
 
@@ -303,7 +371,7 @@
           (string            fg-alt)
           (fnname            blue-warmer)
 
-          ;; Paren matches
+          ;; Patern matches
           (bg-paren-match    bg-cyan-intense)
 
           ;; Accent mappings
@@ -315,7 +383,7 @@
           (accent-3 red-cooler)
 
           ;; Completion mappings
-          (fg-completion-match-0 cyan-intense)
+          ;; (fg-completion-match-0 cyan-intense)
           ;; Prompt mappings
           ;; (fg-prompt orange)
           ))
@@ -1001,16 +1069,21 @@
   ;; M-: flymake-diagnostic-functions
   ;; (add-to-list 'eglot-stay-out-of 'flymake)
   ;; eglotはimenu-listを上書きする. 上書きするとfunction/structなどの構造がフラットになるため、eglotのimenu-listは使わない
-  (add-to-list 'eglot-stay-out-of 'imenu)
+  ;; (add-to-list 'eglot-stay-out-of 'imenu)
 
   ;; language serverを追加する場合はここに追加していく
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp" "--verbose"))) ;;python用
   ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio" "--log-level" "trace"))) ;;python用
   (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio"))) ;;python用
+  ;; (add-to-list 'eglot-server-programs
+  ;;              '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
+  ;; (add-to-list 'eglot-server-programs
+  ;;              '(js-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "1"))) ;; jsx-ts-mode
   (add-to-list 'eglot-server-programs
-               '(tsx-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "4"))) ;; tsx-ts-mode
+               '(jtsx-tsx-mode . my/eglot-ts-server-path))
   (add-to-list 'eglot-server-programs
-               '(js-ts-mode . ("typescript-language-server" "--stdio" "--log-level" "1"))) ;; jsx-ts-mode
+               '(jtsx-jsx-mode . my/eglot-ts-server-path))
+
   (add-to-list 'eglot-server-programs
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
@@ -1166,12 +1239,22 @@
   :bind
   ("<f9>" . imenu-list-smart-toggle)
   :custom
-  (imenu-list-size 0.3)
+  (imenu-list-size 0.2)
   :config
-  ;; line nuberを表示しない
+  ;; line numberを表示しない
   (add-hook 'imenu-list-major-mode-hook (lambda () (display-line-numbers-mode -1)))
   )
-(advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry)
+(with-eval-after-load 'imenu-list
+  (advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry)
+  )
+;; (add-to-list
+;;  'display-buffer-alist
+;;  '("\\*Ilist\\*"
+;;    (display-buffer-in-side-window)
+;;    (side . right)
+;;    (window-width . 10)
+;;    (window-parameters . ((window-size-fixed . width)
+;;                          (window-preserve-size . (nil . t))))))
 ;;; -------------------------------------------------------
 
 
@@ -1212,12 +1295,24 @@
 (use-package zoom
   :config
   (zoom-mode -1)
-  (setq zoom-size '(0.8 . 0.2))
+  (setq zoom-size '(0.612 . 0.612))
   (custom-set-variables
    '(zoom-ignored-major-modes '(neotree-mode))
    ;; '(zoom-ignored-buffer-names '("*Ilist*"))
    )
   )
+;; (with-eval-after-load 'ace-window
+;;   (defun my/after-jump-window (&rest _args)
+;;     "ace-windowで移動した直後、移動先windowのbufferで処理する。"
+;;     (with-current-buffer (window-buffer (selected-window))
+;;       (unless (member (buffer-name) '("*Ilist*"))
+;;             (zoom)
+;;             )
+;;       ))
+;;   (advice-add 'ace-window :after #'my/after-jump-window)
+;;   )
+;; (add-hook 'window-selection-change-functions #'my/after-jump-window)
+
 ;;; ----- window ----------------------------------------
 
 
@@ -1248,6 +1343,9 @@
 ;;; ----- keybind ---------------------------
 ;; window移動
 ;; (global-set-key (kbd "C-t") 'other-window)
+
+(global-set-key (kbd "M-<up>") 'enlarge-window-horizontally) ;;広げる
+(global-set-key (kbd "M-<down>") 'shrink-window-horizontally) ;; 狭くする
 
 ; コメントアウト
 ;; (define-key global-map "\C-c;" 'comment-region)
@@ -1344,135 +1442,30 @@
   (setq org-fontify-done-headline nil)
   (setq work-directory "~/prog/org/")
   :config
-  (setq listfile (concat work-directory "list.org"))
-  (setq chatfile (concat work-directory "chats.org"))
-  (setq ideafile (concat work-directory "idea/idea.org"))
-
-  (defun yy-mm-file (base-dir file-prefix)
-    "Generate a file name like 'YYYY-MM-PREFIX.org' in BASE-DIR."
-    (let* ((now (current-time))
-           (year (format-time-string "%Y" now))
-           (month (format-time-string "%m" now))
-           (full-dir (expand-file-name base-dir)))
-      (unless (file-directory-p full-dir) ;; ディレクトリが存在しない場合は作成
-	(make-directory full-dir t))
-      ;; ファイル名を生成
-      (expand-file-name (format "%s-%s-%s.org" year month file-prefix) full-dir)))
-
-  (defun yy-mm-dd-file (base-dir file-prefix)
-    "Generate a file name like 'YYYY-MM-DD-PREFIX.org' in BASE-DIR."
-    (let* ((now (current-time))
-           (year (format-time-string "%Y" now))
-           (month (format-time-string "%m" now))
-	   (day (format-time-string "%d" now))
-           (full-dir (expand-file-name base-dir)))
-      (unless (file-directory-p full-dir) ;; ディレクトリが存在しない場合は作成
-	(make-directory full-dir t))
-      ;; ファイル名を生成
-      (expand-file-name (format "%s-%s-%s-%s.org" year month day file-prefix) full-dir)))
-
-  ;; (setq taskfile (yy-mm-file (concat work-directory "tasks/") "task"))
-  ;; (setq laterfile (yy-mm-file (concat work-directory "later/") "later"))
-  ;; (setq techfile (yy-mm-dd-file (concat work-directory "tech/") "tech"))
-
-  (setq memofile (yy-mm-file (concat work-directory "todo/") "todo"))
-  (setq memofile (yy-mm-file (concat work-directory "memo/") "memo"))
-  (setq chatfile (yy-mm-dd-file (concat work-directory "chat/") "chat"))
-  (setq fefile (yy-mm-file (concat work-directory "fe/") "fe"))
-  (setq matsuo-lab-file (yy-mm-dd-file (concat work-directory "matsuo-lab-llm-compe/") "matsuo-lab-llm-compe"))
-
-
-  (setq org-capture-templates
-	'(
-	  ;; タスク
-	  ("t" "task" entry (file memofile)
-	   "** TODO %? :todo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: task \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  ("l" "あとで読む" entry (file memofile)
-           "** %? :later: \n:PROPERTIES:\n:CREATED: %U\n:TAG: later \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  ("a" "Any Idea" entry (file memofile)
-           "** %? :any: \n:PROPERTIES:\n:CREATED: %U\n:TAG: any \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  ("i" "Tech memo" entry (file memofile)
-           "** %? :tech: \n:PROPERTIES:\n:CREATED: %U\n:TAG: tech \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  ;; ("m" "Memo" entry (file+headline memofile "Memo")
-      ;;  "* %? :memo: \n  :PROPERTIES:\n  :CREATED: %U\n  :TAG: memo\n  :END:\n  %i\n  %a\n" :empty-lines 1)
-      ("m" "Memo" entry (file memofile)
-       "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n" :empty-lines 1 :tree-type day)
-	  ("e" "emacs" entry (file memofile)
-           "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n%a\n" :empty-lines 1 :tree-type month)
-	  ("p" "Pepar" entry (file memofile)
-           "** %? :pepar: \n:PROPERTIES:\n:CREATED: %U\n:TAG: pepar \n:END:\n%i\n%a\n" :empty-lines 1 :tree-type month)
-
-
-	  ;; ("m" "Memo" entry (file+olp+datetree datetreefile)
-          ;;  "** %<%m-%d(%a) %H:%M>\n#+filetags: :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: :memo: \n:END:\n%?\n%i\n%a\n" :empty-lines 1 :tree-type month)
-	  ("s" "matsuo-lab-llm-compe" entry (file matsuo-lab-file)
-           "** %? :llm_compe: \n:PROPERTIES:\n:CREATED: %U\n:TAG: llm_compe \n:END:\n%i\n%a\n" :empty-lines 1 :tree-type month)
-	  ("c" "chats" entry (file+headline chatfile "Chats")
-	   "** %? :chat: \n\n:PROPERTIES:\n:CREATED: %U\n:TAG: chat\n:END:\n%i\n" :empty-lines 1)
-	  ("f" "FE memo" entry (file fefile)
-           "* %? :fe: \n:PROPERTIES:\n:CREATED: %U\n:TAG: fe \n:END:\n%i\n%a\n"  :empty-lines 1)
-	  )
-	)
+  ;; (setq memofile (yy-mm-file (concat work-directory "memo/") "memo"))
+  ;; (setq org-capture-templates
+  ;;   '(
+  ;;     ("m" "Memo" entry (file memofile)
+  ;;      "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo \n:END:\n%i\n" :empty-lines 1 :tree-type day)
+  ;;     )
+  ;;   )
 
   ;; agendaの設定
-  (defun my-list-subdirectories (dir)
-    "指定したディレクトリ DIR の直下にあるディレクトリのリストを返します。"
-    (let ((files (directory-files dir t nil))) ;; t で絶対パス、nil でソート
-      (cl-loop for file in files
-               when (and (file-directory-p file)
-			 (not (string-equal (file-name-nondirectory file) "."))
-			 (not (string-equal (file-name-nondirectory file) "..")))
-               collect (concat file "/")
-	       )
-      ))
-  (setq org-agenda-files (my-list-subdirectories work-directory))
-  ;;(setq org-agenda-files '("~/prog/org/memo/"))
-  ;; (message org-agenda-files)
+  ;; (setq org-agenda-files (my-list-subdirectories work-directory))
+  ;; (setq org-agenda-files '(work-directory))
+  (setq org-agenda-files '("~/prog/org/memo/"))
   (setq org-agenda-custom-commands
 	'(
-	  ("s" "List entries with memo tag/property" tags "memo")
-	  ("p" "Entries with property TAG=memo" tags "+TAG=\"tech\"")
+	  ("1" "List entries with memo tag/property" tags "memo")
+      ("2" "List entries with rad tag/property" tags "rad")
+      ("3" "List entries with microservice tag/property" tags "microservice")
+	  ;; ("p" "Entries with property TAG=memo" tags "+TAG=\"tech\"")
 	  )
 	)
   )
 
-;; orgの検索用
-(defun my/org-date-string (days-offset)
-  "Return date string like '2025-07-01' offset by DAYS-OFFSET from today."
-  (format-time-string "%Y-%m-%d"
-                      (time-add (current-time)
-                                (days-to-time days-offset)))
-  )
-
-;; プロパティから時刻文字列を取得し、Emacsの内部時刻形式に変換
-(defun my/org-parse-created-timestamp ()
-  "Parse CREATED property as a time value, or nil if not present or invalid."
-  (let ((ts (org-entry-get nil "CREATED")))
-    (when ts
-      (condition-case nil
-          (encode-time (parse-time-string ts))
-        (error nil)))))  ;; エラー時は nil を返す
-
-;; 指定した日数前より後かどうかをチェック
-(defun my/org-created-after-days-ago-p (days)
-  "Return non-nil if the CREATED property is within the last DAYS days."
-  (let ((cutoff (time-subtract (current-time) (days-to-time days))))
-    (let ((created-time (my/org-parse-created-timestamp)))
-      (and created-time
-           (time-less-p cutoff created-time)))))
-
-;; 今日作成されたかチェック
-(defun my/org-created-today-p ()
-  "Return non-nil if CREATED property is today."
-  (let* ((created-time (my/org-parse-created-timestamp))
-         (now (current-time)))
-    (when created-time
-      (let ((created-date (decode-time created-time))
-            (now-date (decode-time now)))
-        (and (= (nth 3 created-date) (nth 3 now-date))   ;; day
-             (= (nth 4 created-date) (nth 4 now-date))   ;; month
-             (= (nth 5 created-date) (nth 5 now-date))))))) ;; year
-
+;; タグで検索する場合はorg-agendaで十分
+;; 日付で検索したい場合はorg-ql
 (use-package org-ql
   :after org
   :straight (org-ql :type git :host nil :repo "https://github.com/alphapapa/org-ql.git" :tag "v0.8.10")
@@ -1608,18 +1601,18 @@
   (neotree-show neotree-hide neotree-dir neotree-find)
   :config
   (setq neo-window-fixed-size nil)
+  ;; line-numberを表示しない
+  (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
   :custom
   (neo-theme 'nerd-icons)
   (neo-window-fixed-size nil) ;; 幅を調節できるようにする
   (neo-show-hidden-files t) ;; デフォルトで隠しファイル表示
   ;; (after-save-hook 'neotree-refresh)
-  ;; line-numberを表示しない
-  (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
   :bind
-  ("M-<up>" . enlarge-window-horizontally) ;;広げる
-  ("M-<down>" . shrink-window-horizontally) ;; 狭くする
   ;;("<f8>" . neotree-projectile-toggle)
   ("<f8>" . neotree-project-dir)
+  ;; ("M-<up>" . enlarge-window-horizontally) ;;広げる
+  ;; ("M-<down>" . shrink-window-horizontally) ;; 狭くする
   :preface
   (defun neotree-project-dir ()
     "Open NeoTree using the git root."
@@ -1678,7 +1671,9 @@
 
 ;;; -------- magit ---------------------------------
 (setq package-start-time (current-time))
-(use-package magit)
+;; (use-package magit
+;;     :straight (magit :type git :host nil :repo "https://github.com/magit/magit.git" :tag "v4.4.2")
+;;   )
 ;; (global-set-key (kbd "C-x g") 'magit-status)
 
 ;; (use-package git-gutter-fringe
