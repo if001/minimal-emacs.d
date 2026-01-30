@@ -6,15 +6,14 @@
 (with-eval-after-load 'org
   (setq memofile (yy-mm-file (concat work-directory "memo/") "memo"))
 
-  (defun org-format (tag) (concat ("** %? :" tag ": \n:PROPERTIES:\n:CREATED: %U\n:TAG: " tag " \n:END:\n%i\n")))
   (setq org-capture-templates
 	'(
       ("m" "Memo" entry (file memofile)
-       (org-format "memo") :empty-lines 1 :tree-type day)
+       "** %? :memo: \n:PROPERTIES:\n:CREATED: %U\n:TAG: memo\n:END:\n%i\n" :empty-lines 1 :tree-type day)
       ("r" "Rad" entry (file memofile)
-       (org-format "rad") :empty-lines 1 :tree-type day)
+       "** %? :rad: \n:PROPERTIES:\n:CREATED: %U\n:TAG: rad\n:END:\n%i\n" :empty-lines 1 :tree-type day)
       ("s" "Micro Service" entry (file memofile)
-       (org-format "micro-service") :empty-lines 1 :tree-type day)
+       "** %? :microservice: \n:PROPERTIES:\n:CREATED: %U\n:TAG: microservice\n:END:\n%i\n" :empty-lines 1 :tree-type day)
       )
     )
   ;; (setq listfile (concat work-directory "list.org"))
