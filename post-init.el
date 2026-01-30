@@ -1277,6 +1277,9 @@
 ;; window移動
 ;; (global-set-key (kbd "C-t") 'other-window)
 
+(global-set-key (kbd "M-<up>") 'enlarge-window-horizontally) ;;広げる
+(global-set-key (kbd "M-<down>") 'shrink-window-horizontally) ;; 狭くする
+
 ; コメントアウト
 ;; (define-key global-map "\C-c;" 'comment-region)
 (define-key global-map (kbd "C-;") 'comment-region)
@@ -1527,18 +1530,18 @@
   (neotree-show neotree-hide neotree-dir neotree-find)
   :config
   (setq neo-window-fixed-size nil)
+  ;; line-numberを表示しない
+  (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
   :custom
   (neo-theme 'nerd-icons)
   (neo-window-fixed-size nil) ;; 幅を調節できるようにする
   (neo-show-hidden-files t) ;; デフォルトで隠しファイル表示
   ;; (after-save-hook 'neotree-refresh)
-  ;; line-numberを表示しない
-  (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
   :bind
-  ("M-<up>" . enlarge-window-horizontally) ;;広げる
-  ("M-<down>" . shrink-window-horizontally) ;; 狭くする
   ;;("<f8>" . neotree-projectile-toggle)
   ("<f8>" . neotree-project-dir)
+  ;; ("M-<up>" . enlarge-window-horizontally) ;;広げる
+  ;; ("M-<down>" . shrink-window-horizontally) ;; 狭くする
   :preface
   (defun neotree-project-dir ()
     "Open NeoTree using the git root."
