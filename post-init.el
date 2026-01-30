@@ -1384,17 +1384,21 @@
   ;;   )
 
   ;; agendaの設定
-  (setq org-agenda-files (my-list-subdirectories work-directory))
-  ;;(setq org-agenda-files '("~/prog/org/memo/"))
-  ;; (message org-agenda-files)
+  ;; (setq org-agenda-files (my-list-subdirectories work-directory))
+  ;; (setq org-agenda-files '(work-directory))
+  (setq org-agenda-files '("~/prog/org/memo/"))
   (setq org-agenda-custom-commands
 	'(
-	  ("s" "List entries with memo tag/property" tags "memo")
-	  ("p" "Entries with property TAG=memo" tags "+TAG=\"tech\"")
+	  ("1" "List entries with memo tag/property" tags "memo")
+      ("2" "List entries with rad tag/property" tags "rad")
+      ("3" "List entries with microservice tag/property" tags "microservice")
+	  ;; ("p" "Entries with property TAG=memo" tags "+TAG=\"tech\"")
 	  )
 	)
   )
 
+;; タグで検索する場合はorg-agendaで十分
+;; 日付で検索したい場合はorg-ql
 (use-package org-ql
   :after org
   :straight (org-ql :type git :host nil :repo "https://github.com/alphapapa/org-ql.git" :tag "v0.8.10")
