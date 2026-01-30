@@ -1172,12 +1172,22 @@
   :bind
   ("<f9>" . imenu-list-smart-toggle)
   :custom
-  (imenu-list-size 0.3)
+  (imenu-list-size 0.2)
   :config
-  ;; line nuberを表示しない
+  ;; line numberを表示しない
   (add-hook 'imenu-list-major-mode-hook (lambda () (display-line-numbers-mode -1)))
   )
-(advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry)
+(with-eval-after-load 'imenu-list
+  (advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry)
+  )
+;; (add-to-list
+;;  'display-buffer-alist
+;;  '("\\*Ilist\\*"
+;;    (display-buffer-in-side-window)
+;;    (side . right)
+;;    (window-width . 10)
+;;    (window-parameters . ((window-size-fixed . width)
+;;                          (window-preserve-size . (nil . t))))))
 ;;; -------------------------------------------------------
 
 
@@ -1224,17 +1234,17 @@
    ;; '(zoom-ignored-buffer-names '("*Ilist*"))
    )
   )
-(with-eval-after-load 'ace-window
-  (defun my/after-jump-window (&rest _args)
-    "ace-windowで移動した直後、移動先windowのbufferで処理する。"
-    (with-current-buffer (window-buffer (selected-window))
-      (unless (member (buffer-name) '("*Ilist*"))
-            (zoom)
-            )
-      ))
-  (advice-add 'ace-window :after #'my/after-jump-window)
-  )
-(add-hook 'window-selection-change-functions #'my/after-jump-window)
+;; (with-eval-after-load 'ace-window
+;;   (defun my/after-jump-window (&rest _args)
+;;     "ace-windowで移動した直後、移動先windowのbufferで処理する。"
+;;     (with-current-buffer (window-buffer (selected-window))
+;;       (unless (member (buffer-name) '("*Ilist*"))
+;;             (zoom)
+;;             )
+;;       ))
+;;   (advice-add 'ace-window :after #'my/after-jump-window)
+;;   )
+;; (add-hook 'window-selection-change-functions #'my/after-jump-window)
 
 ;;; ----- window ----------------------------------------
 

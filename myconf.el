@@ -176,31 +176,51 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 ;;; ------------- js用のeslint -----------------
 
 
-
-
-
 ;;; ------------- imenu listにnerd iconを使う -----------------
-(defun entry-icon-mapping (entry)
-  (pcase entry
-    ("Variable"  "nf-cod-symbol_variable")
-    ("Variables" "nf-cod-symbol_variable")
-    ("Constant"  "nf-cod-symbol_constant")
-    ("Types"     "nf-cod-list_unordered")
-    ("Function"  "nf-cod-symbol_method")
-    ("Method"    "nf-cod-symbol_method")
-    ("Field"     "nf-cod-symbol_field")
-    ("Class"     "nf-cod-symbol_class")
-    ("Interface" "nf-cod-symbol_interface")
-    (_           "nf-cod-symbol_field")
+
+(defconst my/imenu-entry-mapping
+  '(("Variable"  :icon "nf-cod-symbol_variable" :label "var")
+    ("Variables" :icon "nf-cod-symbol_variable" :label "vars")
+    ("Constant"  :icon "nf-cod-symbol_constant" :label "cons")
+    ("Types"     :icon "nf-cod-list_unordered"  :label "ty")
+    ("Type"      :icon "nf-cod-list_unordered"  :label "ty")
+    ("Function"  :icon "nf-cod-symbol_method"   :label "func")
+    ("Method"    :icon "nf-cod-symbol_method"   :label "func")
+    ("Field"     :icon "nf-cod-symbol_field"    :label "field")
+    ("Class"     :icon "nf-cod-symbol_class"    :label "class")
+    ("Struct"    :icon "nf-cod-symbol_structure":label "struct")
+    ("Packages"  :icon "nf-cod-symbol_property" :label "pkg")
+    ("Interface" :icon "nf-cod-symbol_interface":label "i/f")
     )
-  )
-(setq current_entry "")
+  "imenu kind → icon / label mapping.")
+
+(defun my/imenu-entry-props (kind)
+  "KIND に対応する plist を返す。未定義ならデフォルト。"
+  (or (cdr (assoc kind my/imenu-entry-mapping))
+      '(:icon "nf-cod-symbol_field" :label "_")))
+
+
+(defun my/imenu-list--entry-kind (entry)
+  (let* ((name (car-safe entry))
+         (kind (and (stringp name)
+                    (get-text-property 0 'breadcrumb-kind name))))
+    (cond
+     (kind kind)
+     ((stringp my/imenu-list--current-category)
+      my/imenu-list--current-category)
+     ((consp my/imenu-list--current-category)
+      (car my/imenu-list--current-category))
+     (t "_"))))
+
+(defvar-local my/imenu-list--current-category nil)
+
 (with-eval-after-load 'imenu-list
   (defun my/imenu-list--insert-entry (entry depth)
     "Insert a line for ENTRY with DEPTH. (override)"
     (if (imenu--subalist-p entry)
+        ;; カテゴリ行
         (progn
-          (setq current_entry entry)
+          (setq my/imenu-list--current-category entry)
           (insert (imenu-list--depth-string depth))
           (insert-button (format "+ %s" (car entry))
                          'face (imenu-list--get-face depth t)
@@ -208,14 +228,23 @@ Each entry is a directory name like \"app\" or \"frontend\"."
                          'follow-link t
                          'action #'imenu-list--action-toggle-hs)
           (insert "\n"))
-      (insert (imenu-list--depth-string depth))
-      (insert-button (format "%s %s" (nerd-icons-codicon (entry-icon-mapping (car current_entry))) (car entry))
-                     'face (imenu-list--get-face depth nil)
-                     'help-echo (format "Go to: %s" (car entry))
-                     'follow-link t
-                     'action #'imenu-list--action-goto-entry)
-      (insert "\n")))
+
+      ;; エントリ行
+      (let* ((kind  (my/imenu-list--entry-kind entry))
+             (props (my/imenu-entry-props kind)))
+        (insert (imenu-list--depth-string depth))
+        (insert-button
+         (format "%s [%s] %s"
+                 (nerd-icons-codicon (plist-get props :icon))
+                 (plist-get props :label)
+                 (car entry))
+         'face (imenu-list--get-face depth nil)
+         'help-echo (format "Go to: %s (%s)" (car entry) kind)
+         'follow-link t
+         'action #'imenu-list--action-goto-entry)
+        (insert "\n"))))
   )
+
 ;; init.el側で上書きする
 ;; (advice-add 'imenu-list--insert-entry :override #'my/imenu-list--insert-entry))
 ;;; ------------- imenu listにnerd iconを使う -----------------
