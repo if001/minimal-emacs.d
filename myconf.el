@@ -158,7 +158,10 @@ Each entry is a directory name like \"app\" or \"frontend\"."
     ;; project_root/appも追加
     (my/prepend-node-modules-bin-to-path (concat (my/project-root) "app"))
     ;; (setq-local flymake-eslint-project-root (my/project-root))
-    (flymake-eslint-enable)
+
+    (if (executable-find "eslint")
+        (flymake-eslint-enable)
+      )
     )
 
    ;; python用
