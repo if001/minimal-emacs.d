@@ -670,7 +670,8 @@
          "\\.7z$" "\\.rar$"
          "COMMIT_EDITMSG\\'"
          "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
-         "-autoloads\\.el$" "autoload\\.el$" ".recentf" "^/ssh:"))
+         "-autoloads\\.el$" "autoload\\.el$" ".recentf"))
+   ;; "^/ssh:"
 
   :config
   ;; A cleanup depth of -90 ensures that `recentf-cleanup' runs before
@@ -1473,44 +1474,44 @@
   (setq org-ql-views
 	'(
 	  ("🕓 今日作成したメモ"
-           :buffers-files org-agenda-files
+       :buffers-files org-agenda-files
 	   :query (my/org-created-today-p)
-           :title "🕓 今日作成したメモ"
+       :title "🕓 今日作成したメモ"
 	   :files org-agenda-files
 	   )
 	  ("🦑 昨日作成したメモ"
-           :buffers-files org-agenda-files
+       :buffers-files org-agenda-files
 	   :query (my/org-created-after-days-ago-p 1)
-           :title "🦑 昨日作成したメモ"
+       :title "🦑 昨日作成したメモ"
 	   :files org-agenda-files
 	   )
 	  ("📅 過去7日間に作成されたエントリ"
 	   :buffers-files org-agenda-files
-           :title "📅 過去7日間に作成されたエントリ"
+       :title "📅 過去7日間に作成されたエントリ"
 	   :query (my/org-created-after-days-ago-p 7)
-           :files org-agenda-files
+       :files org-agenda-files
 	   )
-          ("📝 メモ"
-           :buffers-files org-agenda-files
-           :query (tags "memo")
-           :title "📝 メモ"
+      ("📝 メモ"
+       :buffers-files org-agenda-files
+       :query (tags "memo")
+       :title "📝 メモ"
 	   :narrow nil
-	 )
-	;; ("今日のタスク"
-        ;;  :buffers-files org-agenda-files
-        ;;  :query (and (todo)
-        ;;              (ts-active :on today)) ; 今日の日付を持つもの
-        ;;  :title "今日のタスク一覧"
-        ;;  :sort (ts priority todo)
-	;;  :narrow nil
-	;;  )
-        ;; ("今週の予定"
-        ;;  :buffers-files org-agenda-files
-        ;;  :query (ts-active :from today :to 7)
-        ;;  :title "今週の予定"
-	;;  :narrow nil
-	;;  ) ;; 今日から7日以内
-	)
+	   )
+	  ;; ("今日のタスク"
+      ;;  :buffers-files org-agenda-files
+      ;;  :query (and (todo)
+      ;;              (ts-active :on today)) ; 今日の日付を持つもの
+      ;;  :title "今日のタスク一覧"
+      ;;  :sort (ts priority todo)
+	  ;;  :narrow nil
+	  ;;  )
+      ;; ("今週の予定"
+      ;;  :buffers-files org-agenda-files
+      ;;  :query (ts-active :from today :to 7)
+      ;;  :title "今週の予定"
+	  ;;  :narrow nil
+	  ;;  ) ;; 今日から7日以内
+	  )
     )
   )
 
