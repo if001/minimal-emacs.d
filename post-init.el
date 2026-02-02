@@ -1059,7 +1059,8 @@
                '(jtsx-tsx-mode . my/eglot-ts-server-path))
   (add-to-list 'eglot-server-programs
                '(jtsx-jsx-mode . my/eglot-ts-server-path))
-
+  (add-to-list 'eglot-server-programs
+               '(jtsx-typescript-mode . ("typescript-language-server" "--stdio" "--log-level" "1")))
   (add-to-list 'eglot-server-programs
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
