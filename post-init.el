@@ -799,7 +799,11 @@
   (vertico-mode))
 
 
-;; consult-imenu: 関数一覧
+;; -- でオプション指定
+;; 特定のファイルのみを対象
+;; {検索文字列} -- -g *.el
+;; !で反転(特定のファイル以外を対象)
+;; {検索文字列} -- -g !*.el
 (use-package consult
   :init
   (setq xref-show-xrefs-function #'consult-xref
@@ -1640,6 +1644,19 @@
 ;;  - [neotree-rename-node] Rename a Node
 ;;  - [neotree-delete-node] Delete a Node
 ;;  - [neotree-create-node] Create a file or a directory (if filename ends with ‘/’)
+
+(use-package neo-highlight
+  :straight (neo-highlight
+             :type git
+             :host nil
+             :repo "https://github.com/if001/neo-highlight.git")
+  :after neotree
+  :config
+  (custom-set-faces
+   '(neo-highlight-current-file-face ((t (:background "#f9e8c0" :underline nil)))))
+  (neo-highlight-mode 1)
+  )
+
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "neotree: %.3f" elapsed))
 ;;; -------- neotree ---------------------------------
