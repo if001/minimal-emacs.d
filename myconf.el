@@ -379,15 +379,15 @@ Each entry is a directory name like \"app\" or \"frontend\"."
               ;; 他の overlay より上に出したい場合
               (overlay-put my/neotree-current-file--ov 'priority 1000))))))))
 
-;; 2) 更新タイミング
-;; - NeoTreeの再描画後（neo-buffer--refresh）に必ず再付与
-(advice-add 'neo-buffer--refresh :after
-            (lambda (&rest _)
-              ;; refresh は neotree バッファで動くので、そのままハイライト更新してよい
-              (my/neotree-highlight-current-buffer-file)))
-
-;; - バッファ切り替え・ウィンドウ移動で更新したい場合
-(add-hook 'buffer-list-update-hook #'my/neotree-highlight-current-buffer-file)
+;; ;; 2) 更新タイミング
+;; ;; - NeoTreeの再描画後（neo-buffer--refresh）に必ず再付与
+;; (advice-add 'neo-buffer--refresh :after
+;;             (lambda (&rest _)
+;;               ;; refresh は neotree バッファで動くので、そのままハイライト更新してよい
+;;               (my/neotree-highlight-current-buffer-file)))
+;;
+;; ;; - バッファ切り替え・ウィンドウ移動で更新したい場合
+;; (add-hook 'buffer-list-update-hook #'my/neotree-highlight-current-buffer-file)
 ;; ------------- neo tree -----------------
 
 
