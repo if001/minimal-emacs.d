@@ -992,7 +992,7 @@
   (back-button-mode 1)
   :bind (:map back-button-mode-map
               ("C-x <left>" . back-button-global-backward)
-         ("C-x <right>" . back-button-global-forward)))
+              ("C-x <right>" . back-button-global-forward)))
 
 
 ;; register
@@ -1020,9 +1020,13 @@
   :init
   (setq eglot-send-changes-idle-time 1.0)
   (setq eglot-extend-to-xref t)
-  (setq eglot-events-buffer-size 0) ;; Eglotのログ/イベントバッファは基本オフ
-  (setq eglot-report-progress nil) ;; Eglotのログ/イベントバッファは基本オフ
-
+  ;; logを表示
+  ;; (setq eglot-events-buffer-size 500)
+  ;; (setq eglot-events-buffer-config '(:size 500 :format full))
+  ;; (setq eglot-report-progress t)
+  ;; log非表示
+  (setq eglot-events-buffer-size 0)
+  (setq eglot-report-progress nil)
   (setq read-process-output-max (* 3 1024 1024)) ;; プロセス読み取りを広げてスループットUP
   :bind ( :map eglot-mode-map
           ("C-c r" . eglot-rename)
@@ -1038,15 +1042,16 @@
              eglot-code-actions
              )
   :config
-  (with-eval-after-load 'flymake
-    (setq flymake-no-changes-timeout 0.5
-          flymake-start-on-save-buffer t
-          flymake-start-on-flymake-mode t
-          flymake-start-on-newline nil))
+  ;; (with-eval-after-load 'flymake
+  ;;   (setq flymake-no-changes-timeout 0.5
+  ;;         flymake-start-on-save-buffer t
+  ;;         flymake-start-on-flymake-mode t
+  ;;         flymake-start-on-newline nil)
+  ;;   )
   ;; eglotがflymakeのflymake-diagnostic-functionsを上書きする
   ;; flymake-collectionのdiagnostic-functionsを使うようにする
   ;; M-: flymake-diagnostic-functions
-  ;; (add-to-list 'eglot-stay-out-of 'flymake)
+  (add-to-list 'eglot-stay-out-of 'flymake)
   ;; eglotはimenu-listを上書きする. 上書きするとfunction/structなどの構造がフラットになるため、eglotのimenu-listは使わない
   ;; (add-to-list 'eglot-stay-out-of 'imenu)
 
@@ -1887,11 +1892,11 @@
     :args '("format" "-"))
   (reformatter-define json-format
     :program "jq"
-    :args '(".")
+    :args '("--indent" "4" ".")
     :lighter " JSONFmt")
 
   :hook
-  (go-ts-mode . go-format-on-save-mode)
+  ;; (go-ts-mode . go-format-on-save-mode)
   (typescript-ts-mode . global-prettier-format-on-save-mode)
   (tsx-ts-mode . global-prettier-format-on-save-mode)
   ;;(python-ts-mode . python-format-on-save-mode)
@@ -1909,12 +1914,16 @@
 ;;; ---------- flymake ----------------------
 (use-package flymake
   :diminish
-  :init (setq flymake-no-changes-timeout nil
+  :init (setq flymake-no-changes-timeout 0.5
               flymake-fringe-indicator-position 'right-fringe
               flymake-margin-indicator-position 'right-margin)
   :config
+   (setq flymake-start-on-save-buffer t
+         flymake-start-on-flymake-mode t
+         flymake-start-on-newline nil)
   (add-hook 'eglot-managed-mode-hook (lambda () (flymake-mode 1)))
-  (setq flymake-log-level 3)
+  ;; (setq flymake-log-level 3)
+  (setq flymake-log-level -1) ;; off
   )
 ;; flymake backendの追加
 (add-hook 'eglot-managed-mode-hook #'my/eglot-flymake-enable)
