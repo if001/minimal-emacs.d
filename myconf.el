@@ -158,11 +158,17 @@ Each entry is a directory name like \"app\" or \"frontend\"."
     ;; project_rootを追加
     (my/prepend-node-modules-bin-to-path (my/project-root))
     ;; project_root/appも追加
-    (my/prepend-node-modules-bin-to-path (concat (my/project-root) "app"))
+    (my/prepend-node-modules-bin-to-path (concat (file-name-as-directory (my/project-root)) "app"))
+
     ;; (setq-local flymake-eslint-project-root (my/project-root))
 
-    (if (executable-find "eslint")
-        (flymake-eslint-enable)
+    (when (executable-find "eslint")
+      (flymake-eslint-enable)
+      (when (derived-mode-p 'js-ts-mode 'jtsx-jsx-mode)
+        (setq-local flymake-diagnostic-functions
+                    (delq #'eglot-flymake-backend flymake-diagnostic-functions))
+        ;; (setq flymake-eslint-executable-args '("--config" (my/project-root) "eslint-local.config.mjs"))
+        )
       )
     )
 
@@ -389,7 +395,9 @@ Each entry is a directory name like \"app\" or \"frontend\"."
               (my/neotree-highlight-current-buffer-file)))
 
 ;; - バッファ切り替え・ウィンドウ移動で更新したい場合
-(add-hook 'buffer-list-update-hook #'my/neotree-highlight-current-buffer-file)
+(with-eval-after-load 'neotree
+  (add-hook 'buffer-list-update-hook #'my/neotree-highlight-current-buffer-file)
+  )
 ;; ------------- neo tree -----------------
 
 
