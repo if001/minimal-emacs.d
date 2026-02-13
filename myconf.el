@@ -27,8 +27,10 @@ macOSで 'pngpaste' がインストールされている必要があります。
         (message "画像を %s に保存しました。" filepath))
     (error "pngpaste が見つかりません。Homebrewでインストールしてください。")))
 
+
 ;; macで白いモヤがかかった画像になる場合は以下をinstall
 ;; brew install coreutils
+;; coreutilsでも白いもやがでるようになったので、pngではなjpegで無理やり保存
 (defun my/insert-screenshot-markdown ()
   "クリップボードの画像を './image-N.png' として現在のディレクトリに保存し、
 カーソル位置にその画像のMarkdownリンクを挿入します。
@@ -46,7 +48,7 @@ macOSで 'pngpaste' がインストールされている必要があります。
     (while (file-exists-p
             (setq file-path
                   (expand-file-name
-                   (format "image-%d.png" file-num)
+                   (format "image-%d.jpeg" file-num)
                    base-dir)))
       (setq file-num (1+ file-num)))
 
