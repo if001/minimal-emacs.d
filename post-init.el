@@ -1235,6 +1235,10 @@
 ;;    (window-width . 10)
 ;;    (window-parameters . ((window-size-fixed . width)
 ;;                          (window-preserve-size . (nil . t))))))
+
+(use-package hideshow
+  :ensure nil
+  :hook (prog-mode . hs-minor-mode))
 ;;; -------------------------------------------------------
 
 
