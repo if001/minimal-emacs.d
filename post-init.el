@@ -988,8 +988,10 @@
 
 ;;; ------------- move/jump -----------------
 (use-package back-button
-  :init (back-button-mode 1)
-  :bind (("C-x <left>"  . back-button-global-backward)
+  :init
+  (back-button-mode 1)
+  :bind (:map back-button-mode-map
+              ("C-x <left>" . back-button-global-backward)
          ("C-x <right>" . back-button-global-forward)))
 
 
