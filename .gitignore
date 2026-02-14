@@ -18,5 +18,5 @@ elpa/
 tramp
 tramp-autosave/
 projects
-myconf.elc
 bookmarks
+*.elc

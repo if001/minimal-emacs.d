@@ -27,8 +27,10 @@ macOSで 'pngpaste' がインストールされている必要があります。
         (message "画像を %s に保存しました。" filepath))
     (error "pngpaste が見つかりません。Homebrewでインストールしてください。")))
 
+
 ;; macで白いモヤがかかった画像になる場合は以下をinstall
 ;; brew install coreutils
+;; coreutilsでも白いもやがでるようになったので、pngではなjpegで無理やり保存
 (defun my/insert-screenshot-markdown ()
   "クリップボードの画像を './image-N.png' として現在のディレクトリに保存し、
 カーソル位置にその画像のMarkdownリンクを挿入します。
@@ -46,7 +48,7 @@ macOSで 'pngpaste' がインストールされている必要があります。
     (while (file-exists-p
             (setq file-path
                   (expand-file-name
-                   (format "image-%d.png" file-num)
+                   (format "image-%d.jpeg" file-num)
                    base-dir)))
       (setq file-num (1+ file-num)))
 
@@ -156,11 +158,17 @@ Each entry is a directory name like \"app\" or \"frontend\"."
     ;; project_rootを追加
     (my/prepend-node-modules-bin-to-path (my/project-root))
     ;; project_root/appも追加
-    (my/prepend-node-modules-bin-to-path (concat (my/project-root) "app"))
+    (my/prepend-node-modules-bin-to-path (concat (file-name-as-directory (my/project-root)) "app"))
+
     ;; (setq-local flymake-eslint-project-root (my/project-root))
 
-    (if (executable-find "eslint")
-        (flymake-eslint-enable)
+    (when (executable-find "eslint")
+      (flymake-eslint-enable)
+      (when (derived-mode-p 'js-ts-mode 'jtsx-jsx-mode)
+        (setq-local flymake-diagnostic-functions
+                    (delq #'eglot-flymake-backend flymake-diagnostic-functions))
+        ;; (setq flymake-eslint-executable-args '("--config" (my/project-root) "eslint-local.config.mjs"))
+        )
       )
     )
 
