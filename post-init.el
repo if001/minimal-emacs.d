@@ -168,15 +168,13 @@
 
     ;; 日英の見かけ幅を合わせる倍率（フォント名でマッチさせる）
     ;; ※ family 全体に効かせるため前方一致の正規表現で指定
-    (let* ((jp-pattern (concat "\\`" (regexp-quote jp)))
-           (alist (copy-sequence face-font-rescale-alist)))
-      ;; 既存の同名エントリを除去してから追加
-      (setq alist (cl-remove-if (lambda (cell)
+    (let ((jp-pattern (concat "\\`" (regexp-quote jp))))
+      ;; 既存の同名エントリを除去してから新規追加
+      (setq face-font-rescale-alist
+            (cons (cons jp-pattern scale)
+                  (cl-remove-if (lambda (cell)
                                   (string-match-p jp-pattern (car cell)))
-                                alist))
-      (push (cons jp-pattern scale) alist)
-      (setf (alist-get jp-pattern alist nil nil #'string=) scale)
-      (setq face-font-rescale-alist alist))
+                                face-font-rescale-alist))))
 
     ;; 行間
     (with-selected-frame frm
@@ -1151,21 +1149,21 @@
 ;; such as Emacs Lisp and Python, allowing users to collapse and expand sections
 ;; based on headings or indentation levels. This feature enhances navigation and
 ;; improves the management of large files with hierarchical structures.
-(use-package outline
-  :ensure nil
-  :commands outline-minor-mode
-  :hook
-  ((emacs-lisp-mode . outline-minor-mode)
-   ;; Use " ▼" instead of the default ellipsis "..." for folded text to make
-   ;; folds more visually distinctive and readable.
-   (outline-minor-mode
-    .
-    (lambda()
-      (let* ((display-table (or buffer-display-table (make-display-table)))
-             (face-offset (* (face-id 'shadow) (ash 1 22)))
-             (value (vconcat (mapcar (lambda (c) (+ face-offset c)) " ▼"))))
-        (set-display-table-slot display-table 'selective-display value)
-        (setq buffer-display-table display-table))))))
+;; (use-package outline
+;;   :ensure nil
+;;   :commands outline-minor-mode
+;;   :hook
+;;   ((emacs-lisp-mode . outline-minor-mode)
+;;    ;; Use " ▼" instead of the default ellipsis "..." for folded text to make
+;;    ;; folds more visually distinctive and readable.
+;;    (outline-minor-mode
+;;     .
+;;     (lambda()
+;;       (let* ((display-table (or buffer-display-table (make-display-table)))
+;;              (face-offset (* (face-id 'shadow) (ash 1 22)))
+;;              (value (vconcat (mapcar (lambda (c) (+ face-offset c)) " ▼"))))
+;;         (set-display-table-slot display-table 'selective-display value)
+;;         (setq buffer-display-table display-table))))))
 
 ;; The outline-indent Emacs package provides a minor mode that enables code
 ;; folding based on indentation levels.
@@ -1176,20 +1174,20 @@
 ;; - Inserting a new line with the same indentation level as the current line
 ;; - Move backward/forward to the indentation level of the current line
 ;; - and other features.
-(use-package outline-indent
-  :ensure t
-  :commands outline-indent-minor-mode
-
-  :custom
-  (outline-indent-ellipsis " ▼")
-
-  :init
-  ;; The minor mode can also be automatically activated for a certain modes.
-  ;;(add-hook 'python-mode-hook #'outline-indent-minor-mode)
-  ;;(add-hook 'python-ts-mode-hook #'outline-indent-minor-mode)
-
-  (add-hook 'yaml-mode-hook #'outline-indent-minor-mode)
-  (add-hook 'yaml-ts-mode-hook #'outline-indent-minor-mode))
+;; (use-package outline-indent
+;;   :ensure t
+;;   :commands outline-indent-minor-mode
+;;
+;;   :custom
+;;   (outline-indent-ellipsis " ▼")
+;;
+;;   :init
+;;   ;; The minor mode can also be automatically activated for a certain modes.
+;;   ;;(add-hook 'python-mode-hook #'outline-indent-minor-mode)
+;;   ;;(add-hook 'python-ts-mode-hook #'outline-indent-minor-mode)
+;;
+;;   (add-hook 'yaml-mode-hook #'outline-indent-minor-mode)
+;;   (add-hook 'yaml-ts-mode-hook #'outline-indent-minor-mode))
 
 ;; The stripspace Emacs package provides stripspace-local-mode, a minor mode
 ;; that automatically removes trailing whitespace and blank lines at the end of
@@ -1309,29 +1307,29 @@
 ;;; ----- Emacsヘルプバッファ ---------------------------
 ;; Helpful is an alternative to the built-in Emacs help that provides much more
 ;; contextual information.
-(use-package helpful
-  :ensure t
-  :commands (helpful-callable
-             helpful-variable
-             helpful-key
-             helpful-command
-             helpful-at-point
-             helpful-function)
-  :bind
-  ([remap describe-command] . helpful-command)
-  ([remap describe-function] . helpful-callable)
-  ([remap describe-key] . helpful-key)
-  ([remap describe-symbol] . helpful-symbol)
-  ([remap describe-variable] . helpful-variable)
-  :custom
-  (helpful-max-buffers 7))
+;; (use-package helpful
+;;   :ensure t
+;;   :commands (helpful-callable
+;;              helpful-variable
+;;              helpful-key
+;;              helpful-command
+;;              helpful-at-point
+;;              helpful-function)
+;;   :bind
+;;   ([remap describe-command] . helpful-command)
+;;   ([remap describe-function] . helpful-callable)
+;;   ([remap describe-key] . helpful-key)
+;;   ([remap describe-symbol] . helpful-symbol)
+;;   ([remap describe-variable] . helpful-variable)
+;;   :custom
+;;   (helpful-max-buffers 7))
 ;;; ----- Emacsヘルプバッファ ---------------------------
 
 
 
 ;;; ----- keybind ---------------------------
 ;; window移動
-;; (global-set-key (kbd "C-t") 'other-window)
+(global-set-key (kbd "C-t") 'other-window)
 
 (global-set-key (kbd "M-<up>") 'enlarge-window-horizontally) ;;広げる
 (global-set-key (kbd "M-<down>") 'shrink-window-horizontally) ;; 狭くする
@@ -1569,15 +1567,22 @@
   :bind
   (:map markdown-mode-map
         ("C-c C-e" . markdown-do)))
-;; Automatically generate a table of contents when editing Markdown files
-(use-package markdown-toc
+;; ;; Automatically generate a table of contents when editing Markdown files
+;; (use-package markdown-toc
+;;   :ensure t
+;;   :commands (markdown-toc-generate-toc
+;;              markdown-toc-generate-or-refresh-toc
+;;              markdown-toc-delete-toc
+;;              markdown-toc--toc-already-present-p)
+;;   :custom
+;;   (markdown-toc-header-toc-title "**Table of Contents**"))
+
+(use-package grip-mode
   :ensure t
-  :commands (markdown-toc-generate-toc
-             markdown-toc-generate-or-refresh-toc
-             markdown-toc-delete-toc
-             markdown-toc--toc-already-present-p)
-  :custom
-  (markdown-toc-header-toc-title "**Table of Contents**"))
+  ;; :config (setq grip-command 'grip) ;; auto, grip, go-grip or mdopen
+  :config (setq grip-command 'go-grip) ;; auto, grip, go-grip or mdopen
+  ;; :hook ((markdown-mode) . grip-mode)
+  )
 ;;; ----- markdown ----------------------------------------
 
 
@@ -1592,6 +1597,7 @@
   (setq neo-window-fixed-size nil)
   ;; line-numberを表示しない
   (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
+  (setq neo-smart-open t) ;; treeを展開する
   :custom
   (neo-theme 'nerd-icons)
   (neo-window-fixed-size nil) ;; 幅を調節できるようにする
