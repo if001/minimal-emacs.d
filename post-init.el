@@ -373,7 +373,10 @@
 
 (use-package doom-modeline
   :ensure t
-  :hook (after-init . doom-modeline-mode))
+  :hook (after-init . doom-modeline-mode)
+  ;; :config
+  ;; (setq doom-modeline-minor-modes t) ;; minor-modeも表示する
+  )
 (use-package hide-mode-line
   :ensure nil
   :hook
@@ -1084,7 +1087,7 @@
                              :venvPath "."
                              :venv ".venv"))
                   ;; build tagの付いたfileの場合goplsに引数が必要-tags=sample,sample2
-                  ;; (:gopls . (:buildFlags ["-tags=!mocktrident"]))
+                  (:gopls . (:buildFlags ["-tags=mock"]))
                   )
                 )
   )
@@ -1109,6 +1112,8 @@
 ;; ミニバッファのeldocをposframeで表示してくれます。
 (use-package eldoc-box
   :after eglot
+  :init
+  (setq eldoc-box-lighter (nerd-icons-faicon "nf-fa-crow"))
   :config
   ;; (set-face-attribute 'eldoc-box-border nil :background "white")
   (set-face-attribute 'eldoc-box-border nil :background "black")
@@ -1671,6 +1676,7 @@
 
 
 ;;; -------- magit ---------------------------------
+;; branch list(tag list):  magit-status magit-show-refs
 (setq package-start-time (current-time))
 ;; (use-package magit
 ;;     :straight (magit :type git :host nil :repo "https://github.com/magit/magit.git" :tag "v4.4.2")
