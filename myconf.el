@@ -12,7 +12,9 @@
        "marp-server"
        "*marp-server*"
        (format "marp --allow-local-files --html --theme /Users/ac211/prog/slide/themes/base.scss --server \"%s\"" default-directory))
-      (browse-url "http://localhost:8080/"))
+      ;; (browse-url "http://localhost:8080/")
+      (xwidget-webkit-browse-url "http://localhost:8080/")
+      )
     )
 
 ;; brew install pngpaste
@@ -400,6 +402,216 @@ Each entry is a directory name like \"app\" or \"frontend\"."
   )
 ;; ------------- neo tree -----------------
 
+
+
+;;; my-preview-markdown.el --- Preview Markdown with go-grip and xwidget -*- lexical-binding: t; -*-
+
+;; (require 'project)
+(require 'url-util)
+
+(defcustom my/preview-markdown-command "go-grip"
+  "Command name or path for go-grip."
+  :type 'string)
+
+(defcustom my/preview-markdown-port 6419
+  "Port number for go-grip."
+  :type 'integer)
+
+(defcustom my/preview-markdown-startup-delay 1.0
+  "Seconds to wait after starting go-grip."
+  :type 'number)
+
+(defcustom my/preview-markdown-mode-line-text " MdPrev"
+  "Fallback lighter text for `my/preview-markdown-project-mode'."
+  :type 'string)
+
+(defcustom my/preview-markdown-mode-line-icon "nf-md-language_markdown"
+  "Nerd icon name for `my/preview-markdown-project-mode'."
+  :type 'string)
+
+
+
+(defvar my/preview-markdown--single-process nil)
+(defvar my/preview-markdown--single-root nil)
+
+(defvar my/preview-markdown--project-process nil)
+(defvar my/preview-markdown--project-root nil)
+(defvar my/preview-markdown--enabled-projects nil)
+
+(defun my/preview-markdown--normalize-root (root)
+  (file-name-as-directory (file-truename (expand-file-name root))))
+
+(defun my/preview-markdown--markdown-file-p (file)
+  (and file
+       (string-match-p
+        (rx "." (or "md" "markdown" "mdown" "mkd") string-end)
+        (downcase file))))
+
+(defun my/preview-markdown--current-markdown-file ()
+  (let ((file (buffer-file-name)))
+    (unless file
+      (user-error "Current buffer is not visiting a file"))
+    (unless (my/preview-markdown--markdown-file-p file)
+      (user-error "Current file is not a Markdown file: %s" file))
+    (expand-file-name file)))
+
+(defun my/preview-markdown--project-root-for-file (file)
+  (let* ((dir (file-name-directory (expand-file-name file)))
+         (project (project-current nil dir)))
+    (unless project
+      (user-error "No project found for: %s" file))
+    (my/preview-markdown--normalize-root (project-root project))))
+
+(defun my/preview-markdown--url (file root)
+  (format "http://localhost:%d/%s"
+          my/preview-markdown-port
+          (mapconcat #'url-hexify-string
+                     (split-string
+                      (file-relative-name (expand-file-name file) root)
+                      "/" t)
+                     "/")))
+
+(defun my/preview-markdown--browse (file root)
+  (unless (fboundp 'xwidget-webkit-browse-url)
+    (user-error "xwidget-webkit-browse-url is not available in this Emacs"))
+  (xwidget-webkit-browse-url (my/preview-markdown--url file root) t))
+
+(defun my/preview-markdown--process-live-p (process)
+  (and process (process-live-p process)))
+
+(defun my/preview-markdown--stop-single ()
+  (when (my/preview-markdown--process-live-p my/preview-markdown--single-process)
+    (delete-process my/preview-markdown--single-process))
+  (setq my/preview-markdown--single-process nil)
+  (setq my/preview-markdown--single-root nil))
+
+(defun my/preview-markdown--stop-project ()
+  (when (my/preview-markdown--process-live-p my/preview-markdown--project-process)
+    (delete-process my/preview-markdown--project-process))
+  (setq my/preview-markdown--project-process nil)
+  (setq my/preview-markdown--project-root nil))
+
+(defun my/preview-markdown--single-sentinel (proc _event)
+  (when (and (eq proc my/preview-markdown--single-process)
+             (memq (process-status proc) '(exit signal failed)))
+    (setq my/preview-markdown--single-process nil)
+    (setq my/preview-markdown--single-root nil)))
+
+(defun my/preview-markdown--project-sentinel (proc _event)
+  (when (and (eq proc my/preview-markdown--project-process)
+             (memq (process-status proc) '(exit signal failed)))
+    (setq my/preview-markdown--project-process nil)
+    (setq my/preview-markdown--project-root nil)))
+
+(defun my/preview-markdown--start-single (file)
+  (unless (executable-find my/preview-markdown-command)
+    (user-error "Could not find executable: %s" my/preview-markdown-command))
+  (let* ((root (my/preview-markdown--normalize-root
+                (file-name-directory (expand-file-name file))))
+         (relative (file-name-nondirectory file)))
+    (unless (and (my/preview-markdown--process-live-p my/preview-markdown--single-process)
+                 (string= root my/preview-markdown--single-root))
+      (my/preview-markdown--stop-single)
+      (let ((default-directory root))
+        (setq my/preview-markdown--single-root root)
+        (setq my/preview-markdown--single-process
+              (make-process
+               :name "my-preview-markdown-single"
+               :buffer "*my-preview-markdown*"
+               :command (list my/preview-markdown-command
+                              "-b=false"
+                              "-p" (number-to-string my/preview-markdown-port)
+                              relative)
+               :noquery t
+               :sentinel #'my/preview-markdown--single-sentinel))
+        (sleep-for my/preview-markdown-startup-delay)))
+    (my/preview-markdown--browse file root)))
+
+(defun my/preview-markdown--start-project (file)
+  (unless (executable-find my/preview-markdown-command)
+    (user-error "Could not find executable: %s" my/preview-markdown-command))
+  (let* ((root (my/preview-markdown--project-root-for-file file))
+         (relative (file-relative-name (expand-file-name file) root)))
+    (unless (and (my/preview-markdown--process-live-p my/preview-markdown--project-process)
+                 (string= root my/preview-markdown--project-root))
+      (my/preview-markdown--stop-project)
+      (let ((default-directory root))
+        (setq my/preview-markdown--project-root root)
+        (setq my/preview-markdown--project-process
+              (make-process
+               :name "my-preview-markdown-project"
+               :buffer "*my-preview-markdown-project*"
+               :command (list my/preview-markdown-command
+                              "-b=false"
+                              "-p" (number-to-string my/preview-markdown-port)
+                              relative)
+               :noquery t
+               :sentinel #'my/preview-markdown--project-sentinel))
+        (sleep-for my/preview-markdown-startup-delay)))
+    (my/preview-markdown--browse file root)))
+
+(defun my/preview-markdown--mode-line-lighter ()
+  (if (and (display-graphic-p)
+           (require 'nerd-icons nil t))
+      (concat
+       " "
+       (nerd-icons-codicon "nf-cod-markdown")
+       )
+    my/preview-markdown-mode-line-text))
+
+(defun my/preview-markdown--maybe-enable-project-mode ()
+  (when (and buffer-file-name
+             (my/preview-markdown--markdown-file-p buffer-file-name))
+    (let ((root (ignore-errors
+                  (my/preview-markdown--project-root-for-file buffer-file-name))))
+      (when (and root
+                 (member root my/preview-markdown--enabled-projects)
+                 (not my/preview-markdown-project-mode))
+        (my/preview-markdown-project-mode 1)))))
+
+;;;###autoload
+(defun my/preview-markdown ()
+  "Preview only the current Markdown file."
+  (interactive)
+  (let ((file (my/preview-markdown--current-markdown-file)))
+    (when (buffer-modified-p)
+      (save-buffer))
+    (my/preview-markdown--start-single file)))
+
+;;;###autoload
+(defun my/preview-markdown-stop ()
+  "Stop all go-grip processes managed by my-preview-markdown."
+  (interactive)
+  (my/preview-markdown--stop-single)
+  (my/preview-markdown--stop-project))
+
+;;;###autoload
+(define-minor-mode my/preview-markdown-project-mode
+  "Enable auto preview for Markdown files in the current project."
+  :lighter (:eval (my/preview-markdown--mode-line-lighter))
+  (let ((root (ignore-errors
+                (my/preview-markdown--project-root-for-file
+                 (or buffer-file-name default-directory)))))
+    (unless root
+      (setq my/preview-markdown-project-mode nil)
+      (user-error "No project found for current buffer"))
+    (if my/preview-markdown-project-mode
+        (progn
+          (add-to-list 'my/preview-markdown--enabled-projects root)
+          (when (and buffer-file-name
+                     (my/preview-markdown--markdown-file-p buffer-file-name))
+            (when (buffer-modified-p)
+              (save-buffer))
+            (my/preview-markdown--start-project buffer-file-name)))
+      (setq my/preview-markdown--enabled-projects
+            (delete root my/preview-markdown--enabled-projects)))))
+
+(add-hook 'find-file-hook #'my/preview-markdown--maybe-enable-project-mode)
+
+(provide 'my-preview-markdown)
+
+;;; my-preview-markdown.el ends here
+;; ------------- go-grip -----------------
 
 (message "loaded myconf.el")
 
