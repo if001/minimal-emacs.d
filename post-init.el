@@ -1071,7 +1071,10 @@
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
                                           ".cache/lsp/elixir-ls-v0.28.0/language_server.sh"))))) ;; elixir
-
+  (add-to-list 'eglot-server-programs
+             `(csharp-ts-mode . ("csharp-ls"))) ;;csharp, dotnetのpathを通した方が良いかも
+  ;; (add-to-list 'eglot-server-programs
+  ;;            `(csharp-ts-mode . (,(expand-file-name "~/.dotnet/tools/csharp-ls")))) ;;csharp, dotnetのpathを通した方が良いかも
   (setq-default eglot-workspace-configuration
                 '(
                   ;; pyrightを使う場合、venvのpathを手動で設定する必要がある
@@ -1751,6 +1754,7 @@
         (go "https://github.com/tree-sitter/tree-sitter-go" "v0.23.3")
         (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "v1.1.0")
         (python "https://github.com/tree-sitter/tree-sitter-python" "v0.23.3")
+        (c-sharp "https://github.com/tree-sitter/tree-sitter-c-sharp" "v0.23.1")
         ))
 
 ;; Treesitがインストールされてない場合は自動でインストールする
@@ -1879,6 +1883,13 @@
 (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
 ;;; -----------------------------------------
 
+;;; --------- csharp ------------------------
+(add-to-list 'auto-mode-alist '("\\.cs\\'" . csharp-ts-mode))
+;; .dotnet/tools を Emacs の実行パスに追加
+(let ((dotnet-tool-path (expand-file-name "~/.dotnet/tools")))
+  (add-to-list 'exec-path dotnet-tool-path)
+  (setenv "PATH" (concat dotnet-tool-path path-separator (getenv "PATH"))))
+;;; --------- csharp ------------------------
 
 ;;; --------- format ------------------------
 (use-package reformatter
@@ -1900,6 +1911,9 @@
     :program "jq"
     :args '("--indent" "4" ".")
     :lighter " JSONFmt")
+  (reformatter-define csharp-format
+    :program "dotnet"
+    :args '("format"))
 
   :hook
   ;; (go-ts-mode . go-format-on-save-mode)
@@ -1911,6 +1925,7 @@
   (json-ts-mode . json-format-on-save-mode)
   ;; (js-ts-mode . web-format-on-save-mode)
   ;; (js-ts-mode . prettier-format-on-save-mode)
+  (csharp-ts-mode . csharp-format-on-save-mode)
   )
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "code: %.3f" elapsed))
