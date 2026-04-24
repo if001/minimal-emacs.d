@@ -1994,16 +1994,39 @@
   ;;(require 'gptel-org)
   (setq
    gptel-default-mode 'org-mode
-   gptel-model 'qwen3:8b
-   gptel-backend (gptel-make-ollama "Ollama"
-                                    :host "172.22.1.15:11434"
-                                    :stream t
-                                    :models '(qwen3:0.6b qwen3:4b qwen3:8b))
+   ;; gptel-default-mode 'markdown-mode
+   gptel-model 'gemini-3-flash-preview
+   gptel-backend   (gptel-make-gemini "Gemini"
+                     :key (getenv "GEMINI_API_KEY")
+                     :stream t
+                     :request-params '(:tools [(:google_search ())])
+                     )
    )
-  (gptel-make-ollama "Ao-Chat"
-    :host "127.0.0.1:8181"
+  (gptel-make-gh-copilot "Copilot"
+    :host "api.business.githubcopilot.com")
+  (setq gptel-model 'claude-haiku-4.5
+        gptel-backend (gptel-make-gh-copilot "Copilot"))
+
+  (gptel-make-ollama "ollama-local"
+    :host "172.22.1.15:11434"
     :stream t
-    :models '(ao))
+    :models '(qwen3.5:4b qwen3:8b))
+  (gptel-make-ollama "ollama-cloud"
+    :host "https://ollama.com"
+    :stream t
+    :key (getenv "OLLAMA_API_KEY")
+    :models '(qwen3.5:cloud kimi-k2.5:cloud)
+    )
+  (gptel-make-ollama "ollama-nv"
+    :host "10.16.1.123:11434"
+    :stream t
+    :models '(qwen3.5:9b)
+    )
+
+  ;; (gptel-make-ollama "Ao-Chat"
+  ;;   :host "127.0.0.1:8181"
+  ;;   :stream t
+  ;;   :models '(ao))
    gptel-use-curl t
    gptel-use-tools t
    gptel-stream	t
@@ -2042,10 +2065,10 @@
      ;;                              :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "http://172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false"))
      ;;  )
     ;; ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
-     ;; ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+     ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
      ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem") :roots (getenv "HOME")))
      ;; ("sequential-thinking" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-sequential-thinking")))
-     ;; ;;("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
+     ("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
      ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
      ;; ("code-agent" . (:command
      ;;                  "/home/issei/prog/mcp/code-deep-researcher/.venv/bin/python"
@@ -2054,13 +2077,36 @@
      ;;                  ))
      ;; ("code-agent-sse" . (:url "http://localhost:8000/mcp"))
      ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     ("learn_mcp" . (:url "https://learn.microsoft.com/api/mcp"))
      )
    )
 
   :config
   (require 'mcp-hub)
   ;; (setq mcp-log-level "debug")
-  :hook (after-init . mcp-hub-start-all-server))
+  ;; :hook (after-init . mcp-hub-start-all-server)
+  )
+;;; -----------------------------------------
+
+
+(use-package acp
+  :ensure t
+  :straight (acp :type git :host nil :repo "https://github.com/xenodium/acp.el.git")
+  )
+(use-package agent-shell
+  :ensure t
+  :after acp
+  :straight (agent-shell :type git :host nil :repo "https://github.com/xenodium/agent-shell")
+  :ensure-system-package
+  ;; Add agent installation configs here
+  (
+   ;; (claude . "brew install claude-code")
+   ;; (claude-agent-acp . "npm install -g @zed-industries/claude-agent-acp")
+   ;; (opencode-agent . "npm install -g https://github.com/anomalyco/opencode")
+   ;; (gemini-cli . "npm install -g @google/gemini-cli")
+   ;; (copilot-cli . "npm install -g @github/copilot")
+   )
+  )
 ;;; -----------------------------------------
 
 ;;; post-init.el ends here
