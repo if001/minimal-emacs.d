@@ -607,7 +607,7 @@
 
 ;; １文が長過ぎる時に自動で折り返し
 ;; (auto-fill-mode)
-(global-visual-line-mode t)
+;; (global-visual-line-mode t)
 ;;; ------------- others ------------------
 
 
@@ -801,7 +801,11 @@
   (vertico-mode))
 
 
-;; consult-imenu: 関数一覧
+;; -- でオプション指定
+;; 特定のファイルのみを対象
+;; {検索文字列} -- -g *.el
+;; !で反転(特定のファイル以外を対象)
+;; {検索文字列} -- -g !*.el
 (use-package consult
   :init
   (setq xref-show-xrefs-function #'consult-xref
@@ -1140,7 +1144,10 @@
 
 ;; emacsの組み込み関数を利用してシンボルをハイライトしてくれます。
 (use-package symbol-overlay
-  :hook (prog-mode . symbol-overlay-mode))
+  :config
+  (setq symbol-overlay-idle-time 0)
+  :hook (prog-mode . symbol-overlay-mode)
+  )
 
 ;; ssh先でのlspのpathを通す
 (with-eval-after-load 'tramp
@@ -1274,9 +1281,9 @@
   (transient-mark-mode t) ;; transient-mark-modeが nilでは動作しませんので注意
   )
 
-(use-package ace-window
-  :bind ("C-t" . 'ace-window)
-  )
+;; (use-package ace-window
+;;   :bind ("C-t" . 'ace-window)
+;;   )
 
 (use-package buffer-move
   :config
@@ -1338,6 +1345,9 @@
 ;;; ----- keybind ---------------------------
 ;; window移動
 (global-set-key (kbd "C-t") 'other-window)
+;; dired-modeでは上書きする
+(with-eval-after-load 'dired
+  (define-key dired-mode-map (kbd "C-t") #'other-window))
 
 (global-set-key (kbd "M-<up>") 'enlarge-window-horizontally) ;;広げる
 (global-set-key (kbd "M-<down>") 'shrink-window-horizontally) ;; 狭くする
@@ -1669,6 +1679,19 @@
 ;;  - [neotree-rename-node] Rename a Node
 ;;  - [neotree-delete-node] Delete a Node
 ;;  - [neotree-create-node] Create a file or a directory (if filename ends with ‘/’)
+
+(use-package neo-highlight
+  :straight (neo-highlight
+             :type git
+             :host nil
+             :repo "https://github.com/if001/neo-highlight.git")
+  :after neotree
+  :config
+  (custom-set-faces
+   '(neo-highlight-current-file-face ((t (:background "#f9e8c0" :underline nil)))))
+  (neo-highlight-mode 1)
+  )
+
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "neotree: %.3f" elapsed))
 ;;; -------- neotree ---------------------------------
