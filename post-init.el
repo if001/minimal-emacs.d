@@ -168,15 +168,13 @@
 
     ;; 日英の見かけ幅を合わせる倍率（フォント名でマッチさせる）
     ;; ※ family 全体に効かせるため前方一致の正規表現で指定
-    (let* ((jp-pattern (concat "\\`" (regexp-quote jp)))
-           (alist (copy-sequence face-font-rescale-alist)))
-      ;; 既存の同名エントリを除去してから追加
-      (setq alist (cl-remove-if (lambda (cell)
+    (let ((jp-pattern (concat "\\`" (regexp-quote jp))))
+      ;; 既存の同名エントリを除去してから新規追加
+      (setq face-font-rescale-alist
+            (cons (cons jp-pattern scale)
+                  (cl-remove-if (lambda (cell)
                                   (string-match-p jp-pattern (car cell)))
-                                alist))
-      (push (cons jp-pattern scale) alist)
-      (setf (alist-get jp-pattern alist nil nil #'string=) scale)
-      (setq face-font-rescale-alist alist))
+                                face-font-rescale-alist))))
 
     ;; 行間
     (with-selected-frame frm
@@ -375,7 +373,10 @@
 
 (use-package doom-modeline
   :ensure t
-  :hook (after-init . doom-modeline-mode))
+  :hook (after-init . doom-modeline-mode)
+  ;; :config
+  ;; (setq doom-modeline-minor-modes t) ;; minor-modeも表示する
+  )
 (use-package hide-mode-line
   :ensure nil
   :hook
@@ -1077,7 +1078,10 @@
                `(elixir-mode . (,(expand-file-name
                                   (concat user-emacs-directory
                                           ".cache/lsp/elixir-ls-v0.28.0/language_server.sh"))))) ;; elixir
-
+  (add-to-list 'eglot-server-programs
+             `(csharp-ts-mode . ("csharp-ls"))) ;;csharp, dotnetのpathを通した方が良いかも
+  ;; (add-to-list 'eglot-server-programs
+  ;;            `(csharp-ts-mode . (,(expand-file-name "~/.dotnet/tools/csharp-ls")))) ;;csharp, dotnetのpathを通した方が良いかも
   (setq-default eglot-workspace-configuration
                 '(
                   ;; pyrightを使う場合、venvのpathを手動で設定する必要がある
@@ -1087,7 +1091,7 @@
                              :venvPath "."
                              :venv ".venv"))
                   ;; build tagの付いたfileの場合goplsに引数が必要-tags=sample,sample2
-                  ;; (:gopls . (:buildFlags ["-tags=!mocktrident"]))
+                  (:gopls . (:buildFlags ["-tags=mock"]))
                   )
                 )
   )
@@ -1112,6 +1116,8 @@
 ;; ミニバッファのeldocをposframeで表示してくれます。
 (use-package eldoc-box
   :after eglot
+  :init
+  (setq eldoc-box-lighter (nerd-icons-faicon "nf-fa-crow"))
   :config
   ;; (set-face-attribute 'eldoc-box-border nil :background "white")
   (set-face-attribute 'eldoc-box-border nil :background "black")
@@ -1158,21 +1164,21 @@
 ;; such as Emacs Lisp and Python, allowing users to collapse and expand sections
 ;; based on headings or indentation levels. This feature enhances navigation and
 ;; improves the management of large files with hierarchical structures.
-(use-package outline
-  :ensure nil
-  :commands outline-minor-mode
-  :hook
-  ((emacs-lisp-mode . outline-minor-mode)
-   ;; Use " ▼" instead of the default ellipsis "..." for folded text to make
-   ;; folds more visually distinctive and readable.
-   (outline-minor-mode
-    .
-    (lambda()
-      (let* ((display-table (or buffer-display-table (make-display-table)))
-             (face-offset (* (face-id 'shadow) (ash 1 22)))
-             (value (vconcat (mapcar (lambda (c) (+ face-offset c)) " ▼"))))
-        (set-display-table-slot display-table 'selective-display value)
-        (setq buffer-display-table display-table))))))
+;; (use-package outline
+;;   :ensure nil
+;;   :commands outline-minor-mode
+;;   :hook
+;;   ((emacs-lisp-mode . outline-minor-mode)
+;;    ;; Use " ▼" instead of the default ellipsis "..." for folded text to make
+;;    ;; folds more visually distinctive and readable.
+;;    (outline-minor-mode
+;;     .
+;;     (lambda()
+;;       (let* ((display-table (or buffer-display-table (make-display-table)))
+;;              (face-offset (* (face-id 'shadow) (ash 1 22)))
+;;              (value (vconcat (mapcar (lambda (c) (+ face-offset c)) " ▼"))))
+;;         (set-display-table-slot display-table 'selective-display value)
+;;         (setq buffer-display-table display-table))))))
 
 ;; The outline-indent Emacs package provides a minor mode that enables code
 ;; folding based on indentation levels.
@@ -1183,20 +1189,20 @@
 ;; - Inserting a new line with the same indentation level as the current line
 ;; - Move backward/forward to the indentation level of the current line
 ;; - and other features.
-(use-package outline-indent
-  :ensure t
-  :commands outline-indent-minor-mode
-
-  :custom
-  (outline-indent-ellipsis " ▼")
-
-  :init
-  ;; The minor mode can also be automatically activated for a certain modes.
-  ;;(add-hook 'python-mode-hook #'outline-indent-minor-mode)
-  ;;(add-hook 'python-ts-mode-hook #'outline-indent-minor-mode)
-
-  (add-hook 'yaml-mode-hook #'outline-indent-minor-mode)
-  (add-hook 'yaml-ts-mode-hook #'outline-indent-minor-mode))
+;; (use-package outline-indent
+;;   :ensure t
+;;   :commands outline-indent-minor-mode
+;;
+;;   :custom
+;;   (outline-indent-ellipsis " ▼")
+;;
+;;   :init
+;;   ;; The minor mode can also be automatically activated for a certain modes.
+;;   ;;(add-hook 'python-mode-hook #'outline-indent-minor-mode)
+;;   ;;(add-hook 'python-ts-mode-hook #'outline-indent-minor-mode)
+;;
+;;   (add-hook 'yaml-mode-hook #'outline-indent-minor-mode)
+;;   (add-hook 'yaml-ts-mode-hook #'outline-indent-minor-mode))
 
 ;; The stripspace Emacs package provides stripspace-local-mode, a minor mode
 ;; that automatically removes trailing whitespace and blank lines at the end of
@@ -1316,22 +1322,22 @@
 ;;; ----- Emacsヘルプバッファ ---------------------------
 ;; Helpful is an alternative to the built-in Emacs help that provides much more
 ;; contextual information.
-(use-package helpful
-  :ensure t
-  :commands (helpful-callable
-             helpful-variable
-             helpful-key
-             helpful-command
-             helpful-at-point
-             helpful-function)
-  :bind
-  ([remap describe-command] . helpful-command)
-  ([remap describe-function] . helpful-callable)
-  ([remap describe-key] . helpful-key)
-  ([remap describe-symbol] . helpful-symbol)
-  ([remap describe-variable] . helpful-variable)
-  :custom
-  (helpful-max-buffers 7))
+;; (use-package helpful
+;;   :ensure t
+;;   :commands (helpful-callable
+;;              helpful-variable
+;;              helpful-key
+;;              helpful-command
+;;              helpful-at-point
+;;              helpful-function)
+;;   :bind
+;;   ([remap describe-command] . helpful-command)
+;;   ([remap describe-function] . helpful-callable)
+;;   ([remap describe-key] . helpful-key)
+;;   ([remap describe-symbol] . helpful-symbol)
+;;   ([remap describe-variable] . helpful-variable)
+;;   :custom
+;;   (helpful-max-buffers 7))
 ;;; ----- Emacsヘルプバッファ ---------------------------
 
 
@@ -1432,11 +1438,12 @@
   ;; TODOキーワード設定
   (setq org-todo-keywords
 	'((sequence "TODO(t)" "DOIN(i)" "WAIT(w)" "|" "DONE(d)")))
-  (setq org-todo-keyword-faces
-	'(
-	  ("WAIT"  . (:foreground "CadetBlue3"      :weight bold))
-	  ("TODO"  . (:foreground "LightGoldenrod3" :weight bold))
-	  ))
+  ;; (setq org-todo-keyword-faces
+  ;;   '(
+  ;;     ("WAIT"  . (:foreground "CadetBlue3"      :weight bold))
+  ;;     ("DOIN"  . (:background "Green"           :weight bold))
+  ;;     ("TODO"  . (:foreground "LightGoldenrod3" :weight bold))
+  ;;     ));; org-modernで設定する
   ;; DONEステータス時の見出しの色を変えない
   (setq org-fontify-done-headline nil)
   (setq work-directory "~/prog/org/")
@@ -1531,6 +1538,8 @@
   :custom
   (org-modern-fold-stars '(("▶" . "▼") ("▷" . "▽") ("▸" . "▾") ("▹" . "▿") ("▸" . "▾")))
   :config
+  (setq org-modern-todo-faces
+        (quote (("DOIN" :background "darkgreen" :foreground "white"))))
   (setopt
    ;; Edit settings
    org-auto-align-tags nil
@@ -1579,15 +1588,22 @@
   :bind
   (:map markdown-mode-map
         ("C-c C-e" . markdown-do)))
-;; Automatically generate a table of contents when editing Markdown files
-(use-package markdown-toc
+;; ;; Automatically generate a table of contents when editing Markdown files
+;; (use-package markdown-toc
+;;   :ensure t
+;;   :commands (markdown-toc-generate-toc
+;;              markdown-toc-generate-or-refresh-toc
+;;              markdown-toc-delete-toc
+;;              markdown-toc--toc-already-present-p)
+;;   :custom
+;;   (markdown-toc-header-toc-title "**Table of Contents**"))
+
+(use-package grip-mode
   :ensure t
-  :commands (markdown-toc-generate-toc
-             markdown-toc-generate-or-refresh-toc
-             markdown-toc-delete-toc
-             markdown-toc--toc-already-present-p)
-  :custom
-  (markdown-toc-header-toc-title "**Table of Contents**"))
+  ;; :config (setq grip-command 'grip) ;; auto, grip, go-grip or mdopen
+  :config (setq grip-command 'go-grip) ;; auto, grip, go-grip or mdopen
+  ;; :hook ((markdown-mode) . grip-mode)
+  )
 ;;; ----- markdown ----------------------------------------
 
 
@@ -1602,6 +1618,7 @@
   (setq neo-window-fixed-size nil)
   ;; line-numberを表示しない
   (add-hook 'neotree-mode-hook (lambda () (display-line-numbers-mode -1)))
+  (setq neo-smart-open t) ;; treeを展開する
   :custom
   (neo-theme 'nerd-icons)
   (neo-window-fixed-size nil) ;; 幅を調節できるようにする
@@ -1682,6 +1699,7 @@
 
 
 ;;; -------- magit ---------------------------------
+;; branch list(tag list):  magit-status magit-show-refs
 (setq package-start-time (current-time))
 ;; (use-package magit
 ;;     :straight (magit :type git :host nil :repo "https://github.com/magit/magit.git" :tag "v4.4.2")
@@ -1768,6 +1786,7 @@
         (go "https://github.com/tree-sitter/tree-sitter-go" "v0.23.3")
         (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "v1.1.0")
         (python "https://github.com/tree-sitter/tree-sitter-python" "v0.23.3")
+        (c-sharp "https://github.com/tree-sitter/tree-sitter-c-sharp" "v0.23.1")
         ))
 
 ;; Treesitがインストールされてない場合は自動でインストールする
@@ -1896,6 +1915,13 @@
 (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
 ;;; -----------------------------------------
 
+;;; --------- csharp ------------------------
+(add-to-list 'auto-mode-alist '("\\.cs\\'" . csharp-ts-mode))
+;; .dotnet/tools を Emacs の実行パスに追加
+(let ((dotnet-tool-path (expand-file-name "~/.dotnet/tools")))
+  (add-to-list 'exec-path dotnet-tool-path)
+  (setenv "PATH" (concat dotnet-tool-path path-separator (getenv "PATH"))))
+;;; --------- csharp ------------------------
 
 ;;; --------- format ------------------------
 (use-package reformatter
@@ -1915,8 +1941,11 @@
     :args '("format" "-"))
   (reformatter-define json-format
     :program "jq"
-    :args '("--indent" "4" ".")
+    :args '("--indent" "2" ".")
     :lighter " JSONFmt")
+  (reformatter-define csharp-format
+    :program "dotnet"
+    :args '("format"))
 
   :hook
   ;; (go-ts-mode . go-format-on-save-mode)
@@ -1928,6 +1957,7 @@
   (json-ts-mode . json-format-on-save-mode)
   ;; (js-ts-mode . web-format-on-save-mode)
   ;; (js-ts-mode . prettier-format-on-save-mode)
+  (csharp-ts-mode . csharp-format-on-save-mode)
   )
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "code: %.3f" elapsed))
@@ -1987,16 +2017,39 @@
   ;;(require 'gptel-org)
   (setq
    gptel-default-mode 'org-mode
-   gptel-model 'qwen3:8b
-   gptel-backend (gptel-make-ollama "Ollama"
-                                    :host "172.22.1.15:11434"
-                                    :stream t
-                                    :models '(qwen3:0.6b qwen3:4b qwen3:8b))
+   ;; gptel-default-mode 'markdown-mode
+   gptel-model 'gemini-3-flash-preview
+   gptel-backend   (gptel-make-gemini "Gemini"
+                     :key (getenv "GEMINI_API_KEY")
+                     :stream t
+                     :request-params '(:tools [(:google_search ())])
+                     )
    )
-  (gptel-make-ollama "Ao-Chat"
-    :host "127.0.0.1:8181"
+  (gptel-make-gh-copilot "Copilot"
+    :host "api.business.githubcopilot.com")
+  (setq gptel-model 'claude-haiku-4.5
+        gptel-backend (gptel-make-gh-copilot "Copilot"))
+
+  (gptel-make-ollama "ollama-local"
+    :host "172.22.1.15:11434"
     :stream t
-    :models '(ao))
+    :models '(qwen3.5:4b qwen3:8b))
+  (gptel-make-ollama "ollama-cloud"
+    :host "https://ollama.com"
+    :stream t
+    :key (getenv "OLLAMA_API_KEY")
+    :models '(qwen3.5:cloud kimi-k2.5:cloud)
+    )
+  (gptel-make-ollama "ollama-nv"
+    :host "10.16.1.123:11434"
+    :stream t
+    :models '(qwen3.5:9b)
+    )
+
+  ;; (gptel-make-ollama "Ao-Chat"
+  ;;   :host "127.0.0.1:8181"
+  ;;   :stream t
+  ;;   :models '(ao))
    gptel-use-curl t
    gptel-use-tools t
    gptel-stream	t
@@ -2035,10 +2088,10 @@
      ;;                              :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "http://172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false"))
      ;;  )
     ;; ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
-     ;; ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+     ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
      ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem") :roots (getenv "HOME")))
      ;; ("sequential-thinking" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-sequential-thinking")))
-     ;; ;;("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
+     ("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
      ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
      ;; ("code-agent" . (:command
      ;;                  "/home/issei/prog/mcp/code-deep-researcher/.venv/bin/python"
@@ -2047,13 +2100,36 @@
      ;;                  ))
      ;; ("code-agent-sse" . (:url "http://localhost:8000/mcp"))
      ;; ("code-agent" . (:command "/home/issei/prog/mcp/lsp_resarch/.venv/bin/python" :args ("agent.py")))
+     ("learn_mcp" . (:url "https://learn.microsoft.com/api/mcp"))
      )
    )
 
   :config
   (require 'mcp-hub)
   ;; (setq mcp-log-level "debug")
-  :hook (after-init . mcp-hub-start-all-server))
+  ;; :hook (after-init . mcp-hub-start-all-server)
+  )
+;;; -----------------------------------------
+
+
+(use-package acp
+  :ensure t
+  :straight (acp :type git :host nil :repo "https://github.com/xenodium/acp.el.git")
+  )
+(use-package agent-shell
+  :ensure t
+  :after acp
+  :straight (agent-shell :type git :host nil :repo "https://github.com/xenodium/agent-shell")
+  :ensure-system-package
+  ;; Add agent installation configs here
+  (
+   ;; (claude . "brew install claude-code")
+   ;; (claude-agent-acp . "npm install -g @zed-industries/claude-agent-acp")
+   ;; (opencode-agent . "npm install -g https://github.com/anomalyco/opencode")
+   ;; (gemini-cli . "npm install -g @google/gemini-cli")
+   ;; (copilot-cli . "npm install -g @github/copilot")
+   )
+  )
 ;;; -----------------------------------------
 
 ;;; post-init.el ends here

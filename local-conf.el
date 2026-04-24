@@ -5,6 +5,7 @@
 
 (with-eval-after-load 'org
   (setq memofile (yy-mm-file (concat work-directory "memo/") "memo"))
+  (setq taskfile (yy-mm-file (concat work-directory "memo/") "task"))
 
   (setq org-capture-templates
 	'(
@@ -16,6 +17,8 @@
        "** %? :microservice: \n:PROPERTIES:\n:CREATED: %U\n:TAG: microservice\n:END:\n%i\n" :empty-lines 1 :tree-type day)
       ("p" "Posts" entry (file memofile)
        "** %? :post: \n:PROPERTIES:\n:CREATED: %U\n:TAG: post\n:END:\n%i\n" :empty-lines 1 :tree-type day)
+      ("t" "Task" entry (file+datetree taskfile)
+       "** TODO %?" :empty-lines 0 :tree-type day)
       )
     )
   ;; (setq listfile (concat work-directory "list.org"))
