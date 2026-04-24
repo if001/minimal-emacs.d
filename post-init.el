@@ -606,7 +606,7 @@
 
 ;; １文が長過ぎる時に自動で折り返し
 ;; (auto-fill-mode)
-(global-visual-line-mode t)
+;; (global-visual-line-mode t)
 ;;; ------------- others ------------------
 
 
@@ -1138,7 +1138,10 @@
 
 ;; emacsの組み込み関数を利用してシンボルをハイライトしてくれます。
 (use-package symbol-overlay
-  :hook (prog-mode . symbol-overlay-mode))
+  :config
+  (setq symbol-overlay-idle-time 0)
+  :hook (prog-mode . symbol-overlay-mode)
+  )
 
 ;; ssh先でのlspのpathを通す
 (with-eval-after-load 'tramp
@@ -1272,9 +1275,9 @@
   (transient-mark-mode t) ;; transient-mark-modeが nilでは動作しませんので注意
   )
 
-(use-package ace-window
-  :bind ("C-t" . 'ace-window)
-  )
+;; (use-package ace-window
+;;   :bind ("C-t" . 'ace-window)
+;;   )
 
 (use-package buffer-move
   :config
@@ -1335,7 +1338,10 @@
 
 ;;; ----- keybind ---------------------------
 ;; window移動
-;; (global-set-key (kbd "C-t") 'other-window)
+(global-set-key (kbd "C-t") 'other-window)
+;; dired-modeでは上書きする
+(with-eval-after-load 'dired
+  (define-key dired-mode-map (kbd "C-t") #'other-window))
 
 (global-set-key (kbd "M-<up>") 'enlarge-window-horizontally) ;;広げる
 (global-set-key (kbd "M-<down>") 'shrink-window-horizontally) ;; 狭くする
