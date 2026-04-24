@@ -1918,7 +1918,7 @@
     :args '("format" "-"))
   (reformatter-define json-format
     :program "jq"
-    :args '("--indent" "4" ".")
+    :args '("--indent" "2" ".")
     :lighter " JSONFmt")
   (reformatter-define csharp-format
     :program "dotnet"
