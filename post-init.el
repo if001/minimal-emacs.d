@@ -1423,11 +1423,12 @@
   ;; TODOキーワード設定
   (setq org-todo-keywords
 	'((sequence "TODO(t)" "DOIN(i)" "WAIT(w)" "|" "DONE(d)")))
-  (setq org-todo-keyword-faces
-	'(
-	  ("WAIT"  . (:foreground "CadetBlue3"      :weight bold))
-	  ("TODO"  . (:foreground "LightGoldenrod3" :weight bold))
-	  ))
+  ;; (setq org-todo-keyword-faces
+  ;;   '(
+  ;;     ("WAIT"  . (:foreground "CadetBlue3"      :weight bold))
+  ;;     ("DOIN"  . (:background "Green"           :weight bold))
+  ;;     ("TODO"  . (:foreground "LightGoldenrod3" :weight bold))
+  ;;     ));; org-modernで設定する
   ;; DONEステータス時の見出しの色を変えない
   (setq org-fontify-done-headline nil)
   (setq work-directory "~/prog/org/")
@@ -1522,6 +1523,8 @@
   :custom
   (org-modern-fold-stars '(("▶" . "▼") ("▷" . "▽") ("▸" . "▾") ("▹" . "▿") ("▸" . "▾")))
   :config
+  (setq org-modern-todo-faces
+        (quote (("DOIN" :background "darkgreen" :foreground "white"))))
   (setopt
    ;; Edit settings
    org-auto-align-tags nil
