@@ -177,11 +177,11 @@
       (setq-default line-spacing my/line-spacing))))
 
 ;; 既存フレーム＆今後作成するフレームに適用
-(my--apply-fonts)
-(add-hook 'after-make-frame-functions #'my--apply-fonts)
-(set-face-attribute 'line-number nil
-                    :family my/font-eng     ; 例: "Ricty Diminished"
-                    :weight 'normal)
+;; (my--apply-fonts)
+;; (add-hook 'after-make-frame-functions #'my--apply-fonts)
+;; (set-face-attribute 'line-number nil
+;;                     :family my/font-eng     ; 例: "Ricty Diminished"
+;;                     :weight 'normal)
 ;;; ------------- font -------------------
 
 
@@ -190,130 +190,17 @@
 ;;; ------------- theme -------------------
 (setq start-time (current-time))
 
-
-(setq overwrite-palette '(
-          ;; Basic value
-          (bg-main          "#ffffff")
-          (bg-dim           "#f2f2f2")
-          (fg-main          "#24292f") ;; default #000000"
-          (fg-dim           "#595959")
-          (fg-alt           "#193668")
-          ;; (bg-active        "#c4c4c4")
-          ;; (bg-inactive      "#e0e0e0")
-          ;; (border           "#9f9f9f")
-
-          ;; Uncommon accent foregrounds
-          ;; (orange           "#bc4c00")
-          (orange           "#D67200") ;; github Lime 5
-          (yellow-light     "#fff8c5")  ;; 黄色
-
-          ;; Special purpose
-          (bg-region         yellow-light)
-          (bg-tab-current    bg-main)
-          ;; (bg-tab-bar        bg-alt)
-          (bg-tab-bar        bg-active)
-          (bg-tab-other      bg-active)
-
-          ;; Code mappings
-          (comment           fg-dim)
-          (operator          blue-faint)
-          (keyword           orange) ;; オレンジ
-          ;; (builtin           cyan-intense)
-          ;; (builtin           fg-main)
-          ;; (builtin           orange)
-          (variable          fg-main)
-          (type              fg-main)
-          (property          blue-warmer)
-          (string            fg-alt)
-          (fnname            blue-warmer)
-
-          ;; General mappings
-          (cursor            fg-dim)
-          ))
-(use-package ef-themes
-  :ensure t
-  ;; :init
-  ;; (ef-themes-take-over-modus-themes-mode 1)
-  :config
-  (setq ef-themes-mixed-fonts t
-        ef-themes-variable-pitch-ui t)
-  ;; (modus-themes-load-theme 'ef-melissa-light)
-  (modus-themes-load-theme 'ef-duo-light)
-  (custom-set-faces
-   '(font-lock-property-use-face ((t (:foreground "#3548cf"))))) ;; blue-warmer: #3548cf
-  :custom
-  ;;(ef-melissa-light-palette-overrides overwrite-palette)
-  (ef-duo-light-palette-overrides overwrite-palette)
-  )
-
-
-;; (setq timu-spacegrey-flavour "light")
-;; (use-package timu-spacegrey-theme
-;;   :ensure t
-;;   :config
-;;   (load-theme 'timu-spacegrey t)
-;;   )
-;; (use-package solarized-theme
-;;   :ensure t
-;;   :config
-;;   (load-theme 'solarized-light t)
-;;   )
-;;
-;; (use-package autothemer)
-;; (use-package github-dark-dimmed-theme
-;;   :after autothemer
-;;   :straight (github-dark-dimmed-theme :type git :host nil :repo "https://github.com/ladroid/github-emacs-theme.git")
-;;   :ensure t
-;;   :config
-;;   (load-theme 'github-light t)
-;;   ;;(load-theme 'github-dark-dimmed t)
-;;   )
-
-;; (use-package github-theme
-;;   :straight (github-theme :type git :host nil :repo "https://github.com/chaploud/github-theme-emacs")
-;;   :custom
-;;   (github-theme-flavor 'light)
-;;   :config
-;;   (load-theme 'github t))
-
-
-;; (use-package modus-themes
-;;   :ensure t
-;;   :demand t
-;;   :init
-;;   ;; (modus-themes-include-derivatives-mode 1)
-;;   :config
-;;   (setq modus-themes-mixed-fonts t
-;;         modus-themes-variable-pitch-ui t
-;;         modus-themes-italic-constructs t
-;;         modus-themes-bold-constructs t
-;;         modus-themes-completions '((t . (bold)))
-;;         modus-themes-prompts '(bold)
-;;         modus-themes-headings
-;;         '((agenda-structure . (variable-pitch light 2.2))
-;;           (agenda-date . (variable-pitch regular 1.3))
-;;           (t . (regular 1.15))))
-;;
-;;   (setq modus-themes-bold-constructs nil) ;; boldを無効化
-;;   (setq modus-themes-common-palette-overrides
-;;         '(
-;;           ;; --- GitHub Light ---
-;;           ;; Basic values
+;; ;; github theme
+;; (setq overwrite-palette '(
+;;           ;; Basic value
 ;;           (bg-main          "#ffffff")
 ;;           (bg-dim           "#f2f2f2")
 ;;           (fg-main          "#24292f") ;; default #000000"
 ;;           (fg-dim           "#595959")
 ;;           (fg-alt           "#193668")
-;;           (bg-active        "#c4c4c4")
-;;           (bg-inactive      "#e0e0e0")
-;;           (border           "#9f9f9f")
-;;
-;;           ;; (blue-cooler      "#9EECFF") ;; Blue 1
-;;           ;; (blue             "#3094FF") ;; Blue 2
-;;           ;; (blue-warmer      "#1A61FE") ;; Blue 3
-;;           ;; (blue-intense     "#0527FC") ;; Blue 4
-;;           ;; (blue-faint       "#212183") ;; Blue 5
-;;
+;;           ;; (bg-active        "#c4c4c4")
+;;           ;; (bg-inactive      "#e0e0e0")
+;;           ;; (border           "#9f9f9f")
 ;;
 ;;           ;; Uncommon accent foregrounds
 ;;           ;; (orange           "#bc4c00")
@@ -323,56 +210,115 @@
 ;;           ;; Special purpose
 ;;           (bg-region         yellow-light)
 ;;           (bg-tab-current    bg-main)
-;;           (bg-hover          bg-cyan-intense)
-;;           ;; General mappings
-;;           (cursor            fg-dim)
+;;           ;; (bg-tab-bar        bg-alt)
+;;           (bg-tab-bar        bg-active)
+;;           (bg-tab-other      bg-active)
 ;;
 ;;           ;; Code mappings
 ;;           (comment           fg-dim)
 ;;           (operator          blue-faint)
 ;;           (keyword           orange) ;; オレンジ
-;;           (builtin           cyan-intense)
+;;           ;; (builtin           cyan-intense)
 ;;           ;; (builtin           fg-main)
 ;;           ;; (builtin           orange)
 ;;           (variable          fg-main)
 ;;           (type              fg-main)
-;;
 ;;           (property          blue-warmer)
 ;;           (string            fg-alt)
 ;;           (fnname            blue-warmer)
 ;;
-;;           ;; Patern matches
-;;           (bg-paren-match    bg-cyan-intense)
-;;
-;;           ;; Accent mappings
-;;           ;; (accent-0 cyan-intense)
-;;           ;; (accent-0 bg-cyan-intense)
-;;           (accent-0 orange)
-;;           (accent-1 cyan-intense)
-;;           (accent-2 cyan-intense)
-;;           (accent-3 red-cooler)
-;;
-;;           ;; Completion mappings
-;;           ;; (fg-completion-match-0 cyan-intense)
-;;           ;; Prompt mappings
-;;           ;; (fg-prompt orange)
+;;           ;; General mappings
+;;           (cursor            fg-dim)
 ;;           ))
-;;   (custom-set-faces
-;;    '(font-lock-property-use-face ((t (:foreground "#3548cf"))))) ;; blue-warmer: #3548cf
 ;;
-;;   ;; (modus-themes-load-theme 'modus-operandi-deuteranopia)
-;;   (modus-themes-load-theme 'modus-operandi)
+;; (use-package ef-themes
+;;   :ensure t
+;;   ;; :init
+;;   ;; (ef-themes-take-over-modus-themes-mode 1)
+;;   :config
+;;   (setq ef-themes-mixed-fonts t
+;;         ef-themes-variable-pitch-ui t)
+;;   ;; (modus-themes-load-theme 'ef-melissa-light)
+;;   (modus-themes-load-theme 'ef-duo-light)
+;;   (custom-set-faces
+;;    '(font-lock-property-use-face ((t (:foreground "#3548cf"))))
+;;    '(corfu-default ((t (:background nil))))
+;;    '(corfu-current ((t (:background nil))))
+;;    '(corfu--cbar ((t (:background nil))))
+;;    ;; workspace-hudとspacious-paddingを合わせて使うと,hudにpaddingが表示されるので背景色と合わせておく
+;;    '(child-frame-border ((t (:background nil))))
+;;    )
+;;   :custom
+;;   ;;(ef-melissa-light-palette-overrides overwrite-palette)
+;;   (ef-duo-light-palette-overrides overwrite-palette)
 ;;   )
 
-
-
-
-(use-package doom-modeline
+(use-package nano
   :ensure t
-  :hook (after-init . doom-modeline-mode)
-  ;; :config
-  ;; (setq doom-modeline-minor-modes t) ;; minor-modeも表示する
+  :straight (nano :type git :host github :repo "rougier/nano-emacs")
+  :config
+  ;; neotreeの場合mode lineを非表示
+  (add-hook 'neotree-mode-hook
+            (lambda ()
+              (setq-local header-line-format nil)))
+  (add-hook 'imenu-list-major-mode
+            (lambda ()
+              (setq-local header-line-format nil)))
+  (setq nano-font-family-monospaced my/font-jp)
+  (setq nano-font-family-proportional my/font-jp)
+  (setq nano-font-size 12)
   )
+
+(use-package nano-vertico
+  :ensure t
+  :after (nano vertico)
+  :straight (nano-vertico :type git :host github :repo "rougier/nano-vertico")
+  :config
+  (nano-vertico-mode 1)
+  ;; nano-verticoと併用する設定
+  ;; nano-vertico は vertico--display-candidates を :override する。
+  ;; これが vertico-posframe の表示処理を潰すため外す。
+  ;; これにより nano-vertico--format-candidate の見た目調整は残り、
+  ;; posframe 表示は vertico-posframe に任せる。
+  ;; (advice-remove 'vertico--display-candidates
+  ;;                #'nano-vertico-display-candidates)
+  )
+
+(use-package vertico-buffer-frame
+  :ensure t
+  :after (vertico nano-vertico)
+  :straight (vertico-buffer-frame :type git :host github :repo "kn66/vertico-buffer-frame")
+  :custom
+  (vertico-buffer-frame-consult-preview nil)
+  (vertico-buffer-frame-golden-ratio-scale 1.2)
+  :config
+  (vertico-buffer-frame-mode)
+  )
+
+;; (use-package vertico-posframe-preview
+;;   :ensure t
+;;   :after (vertico nano-vertico)
+;;   ;;:after (vertico)
+;;   :straight (vertico-posframe-preview :type git :host github :repo "kn66/vertico-posframe-preview")
+;;   :config
+;;   (vertico-posframe-mode 1)
+;;   (vertico-posframe-preview-mode 1)
+;;   )
+;; nano-verticoと併用する設定
+;; (defun my/nano-vertico-disable-display-override ()
+;;   (advice-remove 'vertico--display-candidates
+;;                  #'nano-vertico-display-candidates))
+;; (with-eval-after-load 'nano-vertico
+;;   (add-hook 'nano-vertico-mode-hook
+;;             #'my/nano-vertico-disable-display-override))
+
+;; nano-emacsを使う場合不要
+;; (use-package doom-modeline
+;;   :ensure t
+;;   :hook (after-init . doom-modeline-mode)
+;;   ;; :config
+;;   ;; (setq doom-modeline-minor-modes t) ;; minor-modeも表示する
+;;   )
 (use-package hide-mode-line
   :ensure nil
   :hook
@@ -429,54 +375,55 @@
 
 ;;; ------------- tab --------------------
 (setq package-start-time (current-time))
-(use-package centaur-tabs
-  :ensure t
-  :init
-  (centaur-tabs-mode t) ;; グローバルにCentaur Tabsを有効にする
-  :config
-  (defun centaur-tabs-hide-tab (x)
-  "Do no to show buffer X in tabs."
-  (let ((name (format "%s" x)))
-    (or
-     ;; Current window is not dedicated window.
-     (window-dedicated-p (selected-window))
+;; (use-package centaur-tabs
+;;   :ensure t
+;;   :init
+;;   (centaur-tabs-mode t) ;; グローバルにCentaur Tabsを有効にする
+;;   :config
+;;   (defun centaur-tabs-hide-tab (x)
+;;   "Do no to show buffer X in tabs."
+;;   (let ((name (format "%s" x)))
+;;     (or
+;;      ;; Current window is not dedicated window.
+;;      (window-dedicated-p (selected-window))
+;;
+;;      ;; Buffer name not match below blacklist.
+;;      ;; (string-prefix-p "*Flycheck" name)
+;;      ;; (string-prefix-p "*Flymake log*" name)
+;;      ;; (string-prefix-p "*Warnings*" name)
+;;      ;; (string-prefix-p "*Messages*" name)
+;;      ;; (string-prefix-p "*lsp" name)
+;;      ;; (string-prefix-p "*pylsp*" name)
+;;      ;; (string-prefix-p "*pylsp::stderr*" name)
+;;
+;;      ;; Is not magit buffer.
+;;      (and (string-prefix-p "magit" name)
+;; 	  (not (file-name-extension name)))
+;;      )))
+;;   :custom
+;;   ;; (centaur-tabs-style "wave")
+;;   (centaur-tabs-height 32)
+;;
+;;   ;; icons
+;;   (centaur-tabs-set-icons t)
+;;   ;; (centaur-tabs-plain-icons t)
+;;   (centaur-tabs-icon-type 'nerd-icons)
+;;
+;;   ;; To display an underline over the selected tab:
+;;   ;; (centaur-tabs-set-bar 'over)
+;;   (centaur-tabs-set-bar 'under)
+;;   (x-underline-at-descent-line t)
+;;
+;;   (centaur-tabs-set-close-button nil)
+;;
+;;   ;; Customize the modified marker
+;;   (centaur-tabs-set-modified-marker t)
+;;   ;; (centaur-tabs-modified-marker "*")
+;;   :bind
+;;   ("M-[" . centaur-tabs-backward)
+;;   ("M-]" . centaur-tabs-forward)
+;;   )
 
-     ;; Buffer name not match below blacklist.
-     ;; (string-prefix-p "*Flycheck" name)
-     ;; (string-prefix-p "*Flymake log*" name)
-     ;; (string-prefix-p "*Warnings*" name)
-     ;; (string-prefix-p "*Messages*" name)
-     ;; (string-prefix-p "*lsp" name)
-     ;; (string-prefix-p "*pylsp*" name)
-     ;; (string-prefix-p "*pylsp::stderr*" name)
-
-     ;; Is not magit buffer.
-     (and (string-prefix-p "magit" name)
-	  (not (file-name-extension name)))
-     )))
-  :custom
-  ;; (centaur-tabs-style "wave")
-  (centaur-tabs-height 32)
-
-  ;; icons
-  (centaur-tabs-set-icons t)
-  ;; (centaur-tabs-plain-icons t)
-  (centaur-tabs-icon-type 'nerd-icons)
-
-  ;; To display an underline over the selected tab:
-  ;; (centaur-tabs-set-bar 'over)
-  (centaur-tabs-set-bar 'under)
-  (x-underline-at-descent-line t)
-
-  (centaur-tabs-set-close-button nil)
-
-  ;; Customize the modified marker
-  (centaur-tabs-set-modified-marker t)
-  ;; (centaur-tabs-modified-marker "*")
-  :bind
-  ("M-[" . centaur-tabs-backward)
-  ("M-]" . centaur-tabs-forward)
-  )
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "tab: %.3f" elapsed))
 ;;; ------------- tab --------------------
