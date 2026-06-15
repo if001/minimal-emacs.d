@@ -107,8 +107,14 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 `my-tsserver-subdirs` で指定されたディレクトリを優先的に探して
 対応する tsserver.js を使う。"
   (if-let ((tsserver (my-tsserver-path)))
+      ;; tsserver-pathがあるバージョンはこっち
+      ;; (list "typescript-language-server" "--stdio"
+      ;;       "--tsserver-path" tsserver)
+      ;; tsserver-pathが廃止されたのでこっち
       (list "typescript-language-server" "--stdio"
-            "--tsserver-path" tsserver)
+            :initializationOptions
+            (list :tsserver
+                  (list :path tsserver)))
     ;; 見つからなければ従来どおり
     '("typescript-language-server" "--stdio")))
 ;;; ------------- typescript language server path for eglot -----------------
