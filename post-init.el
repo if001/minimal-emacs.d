@@ -1594,12 +1594,17 @@
 ;;   :custom
 ;;   (markdown-toc-header-toc-title "**Table of Contents**"))
 
-(use-package grip-mode
-  :ensure t
-  ;; :config (setq grip-command 'grip) ;; auto, grip, go-grip or mdopen
-  :config (setq grip-command 'go-grip) ;; auto, grip, go-grip or mdopen
-  ;; :hook ((markdown-mode) . grip-mode)
-  )
+;; (use-package grip-mode
+;;   :ensure t
+;;   ;; :config (setq grip-command 'grip) ;; auto, grip, go-grip or mdopen
+;;   :config (setq grip-command 'go-grip) ;; auto, grip, go-grip or mdopen
+;;   ;; :hook ((markdown-mode) . grip-mode)
+;;   )
+
+(with-eval-after-load 'xwidget
+  (define-key xwidget-webkit-mode-map (kbd "M-w") 'xwidget-webkit-copy-selection-as-kill)
+  ;; ついでに便利なショートカット
+  (define-key xwidget-webkit-mode-map (kbd "C-c C-c") 'xwidget-webkit-copy-selection-as-kill))
 ;;; ----- markdown ----------------------------------------
 
 
