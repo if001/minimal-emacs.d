@@ -3,10 +3,6 @@
 ;;; summary:
 ;;; code:
 
-
-(minimal-emacs-load-user-init "myconf.el")
-(minimal-emacs-load-user-init "local-conf.el")
-
 ;;; ------------- Native Compilation -----------------
 ;; Native compilation enhances Emacs performance by converting Elisp code into
 ;; native machine code, resulting in faster execution and improved
@@ -2132,4 +2128,6 @@
   )
 ;;; -----------------------------------------
 
+(minimal-emacs-load-user-init "myconf.el")
+(minimal-emacs-load-user-init "local-conf.el")
 ;;; post-init.el ends here
