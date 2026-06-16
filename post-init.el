@@ -318,7 +318,18 @@
 ;;   :hook (after-init . doom-modeline-mode)
 ;;   ;; :config
 ;;   ;; (setq doom-modeline-minor-modes t) ;; minor-modeも表示する
+;;   :custom
+;;   (doom-modeline-buffer-encoding nil) ;; 改行コード（LF）や文字コード（UTF-8）を非表示にする
+;;   (doom-modeline-line-number nil)         ;; 行番号を非表示
+;;   (doom-modeline-column-number nil)       ;; 列番号を非表示
+;;   (doom-modeline-percent-position nil)
 ;;   )
+
+;; マイナーモードをバーガーメニューで表示
+;; (use-package minions
+;;   :init
+;;   (minions-mode +1))
+
 (use-package hide-mode-line
   :ensure nil
   :hook
@@ -741,8 +752,8 @@
   (vertico-count 20) ;; 候補リスト20
   ;; (vertico-resize t) ;; ウィンドウを自動でリサイズ（オプション）
   :config
-  (vertico-mode))
-
+  (vertico-mode)
+  )
 
 ;; -- でオプション指定
 ;; 特定のファイルのみを対象
@@ -1649,6 +1660,7 @@
 ;;; -------- magit ---------------------------------
 ;; branch list(tag list):  magit-status magit-show-refs
 (setq package-start-time (current-time))
+(setq magit-format-file-function #'magit-format-file-nerd-icons)
 ;; (use-package magit
 ;;     :straight (magit :type git :host nil :repo "https://github.com/magit/magit.git" :tag "v4.4.2")
 ;;   )
@@ -1753,6 +1765,17 @@
   :bind
   ("C-h" . treesit-fold-toggle)
   )
+
+
+;; (use-package smart-jump :ensure t)
+;;
+;; (use-package jumplist
+;;   :ensure nil
+;;   :straight '(jumplist :type git :host github :repo "ganmacs/jumplist")
+;;   :config
+;;   (global-set-key (kbd "C-<") 'jumplist-previous)
+;;   (global-set-key (kbd "C->") 'jumplist-next)
+;;   )
 ;;; -------- code ---------------------------------
 
 
@@ -2064,6 +2087,7 @@
   :ensure t
   :straight (acp :type git :host nil :repo "https://github.com/xenodium/acp.el.git")
   )
+(add-to-list 'exec-path "./target/debug/") ;; codex-acp用
 (use-package agent-shell
   :ensure t
   :after acp
@@ -2076,10 +2100,19 @@
    ;; (opencode-agent . "npm install -g https://github.com/anomalyco/opencode")
    ;; (gemini-cli . "npm install -g @google/gemini-cli")
    ;; (copilot-cli . "npm install -g @github/copilot")
+   ;; (codex . "npx @zed-industries/codex-acp")
    )
   )
 ;;; -----------------------------------------
+;; (message "4: %s" file-name-handler-alist)
+;; tramp-modeを強制設定
+;; file-name-handler-alistにtramp-の項目が含まれる必要がある
+;; 設定されていないのでこれで無理やり設定する
+;; (tramp-register-file-name-handlers)
 
 (minimal-emacs-load-user-init "myconf.el")
 (minimal-emacs-load-user-init "local-conf.el")
+(let ((elapsed (float-time (time-subtract (current-time) start-time))))
+  (message "done: %.3f" elapsed))
+
 ;;; post-init.el ends here
