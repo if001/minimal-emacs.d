@@ -107,8 +107,14 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 `my-tsserver-subdirs` で指定されたディレクトリを優先的に探して
 対応する tsserver.js を使う。"
   (if-let ((tsserver (my-tsserver-path)))
+      ;; tsserver-pathがあるバージョンはこっち
+      ;; (list "typescript-language-server" "--stdio"
+      ;;       "--tsserver-path" tsserver)
+      ;; tsserver-pathが廃止されたのでこっち
       (list "typescript-language-server" "--stdio"
-            "--tsserver-path" tsserver)
+            :initializationOptions
+            (list :tsserver
+                  (list :path tsserver)))
     ;; 見つからなければ従来どおり
     '("typescript-language-server" "--stdio")))
 ;;; ------------- typescript language server path for eglot -----------------
@@ -405,6 +411,7 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 ;;; my-preview-markdown.el --- Preview Markdown with go-grip and xwidget -*- lexical-binding: t; -*-
 
 ;; (require 'project)
+(require 'subr-x)
 (require 'url-util)
 
 (defcustom my/preview-markdown-command "go-grip"
@@ -412,12 +419,17 @@ Each entry is a directory name like \"app\" or \"frontend\"."
   :type 'string)
 
 (defcustom my/preview-markdown-port 6419
-  "Port number for go-grip."
+  "Base port number for go-grip.
+Each active project preview uses this port or a higher unused port."
   :type 'integer)
 
 (defcustom my/preview-markdown-startup-delay 1.0
   "Seconds to wait after starting go-grip."
   :type 'number)
+
+(defcustom my/preview-markdown-log-messages t
+  "When non-nil, write preview status messages to `*Messages*'."
+  :type 'boolean)
 
 (defcustom my/preview-markdown-mode-line-text " MdPrev"
   "Fallback lighter text for `my/preview-markdown-project-mode'."
@@ -426,15 +438,14 @@ Each entry is a directory name like \"app\" or \"frontend\"."
 (defcustom my/preview-markdown-mode-line-icon "nf-md-language_markdown"
   "Nerd icon name for `my/preview-markdown-project-mode'."
   :type 'string)
-
-
-
-(defvar my/preview-markdown--single-process nil)
-(defvar my/preview-markdown--single-root nil)
-
-(defvar my/preview-markdown--project-process nil)
-(defvar my/preview-markdown--project-root nil)
+(defvar my/preview-markdown--project-states (make-hash-table :test 'equal))
 (defvar my/preview-markdown--enabled-projects nil)
+
+(defun my/preview-markdown--log (format-string &rest args)
+  (when my/preview-markdown-log-messages
+    (apply #'message
+           (concat "[my/preview-markdown] " format-string)
+           args)))
 
 (defun my/preview-markdown--normalize-root (root)
   (file-name-as-directory (file-truename (expand-file-name root))))
@@ -460,93 +471,210 @@ Each entry is a directory name like \"app\" or \"frontend\"."
       (user-error "No project found for: %s" file))
     (my/preview-markdown--normalize-root (project-root project))))
 
-(defun my/preview-markdown--url (file root)
+(defun my/preview-markdown--root-for-file (file)
+  (or (ignore-errors
+        (my/preview-markdown--project-root-for-file file))
+      (my/preview-markdown--normalize-root
+       (file-name-directory (expand-file-name file)))))
+
+(defun my/preview-markdown--relative-file (file root)
+  (file-relative-name (expand-file-name file) root))
+
+(defun my/preview-markdown--url (file root port)
   (format "http://localhost:%d/%s"
-          my/preview-markdown-port
+          port
           (mapconcat #'url-hexify-string
                      (split-string
-                      (file-relative-name (expand-file-name file) root)
+                      (my/preview-markdown--relative-file file root)
                       "/" t)
-                     "/")))
+                      "/")))
 
-(defun my/preview-markdown--browse (file root)
+(defun my/preview-markdown--browse (file root port)
   (unless (fboundp 'xwidget-webkit-browse-url)
     (user-error "xwidget-webkit-browse-url is not available in this Emacs"))
-  (xwidget-webkit-browse-url (my/preview-markdown--url file root) t))
+  (let ((url (my/preview-markdown--url file root port)))
+    (my/preview-markdown--log "browse %s" url)
+    (xwidget-webkit-browse-url url t)))
 
 (defun my/preview-markdown--process-live-p (process)
   (and process (process-live-p process)))
 
-(defun my/preview-markdown--stop-single ()
-  (when (my/preview-markdown--process-live-p my/preview-markdown--single-process)
-    (delete-process my/preview-markdown--single-process))
-  (setq my/preview-markdown--single-process nil)
-  (setq my/preview-markdown--single-root nil))
+(defun my/preview-markdown--state (root)
+  (gethash root my/preview-markdown--project-states))
 
-(defun my/preview-markdown--stop-project ()
-  (when (my/preview-markdown--process-live-p my/preview-markdown--project-process)
-    (delete-process my/preview-markdown--project-process))
-  (setq my/preview-markdown--project-process nil)
-  (setq my/preview-markdown--project-root nil))
+(defun my/preview-markdown--set-state (root state)
+  (puthash root state my/preview-markdown--project-states))
 
-(defun my/preview-markdown--single-sentinel (proc _event)
-  (when (and (eq proc my/preview-markdown--single-process)
-             (memq (process-status proc) '(exit signal failed)))
-    (setq my/preview-markdown--single-process nil)
-    (setq my/preview-markdown--single-root nil)))
+(defun my/preview-markdown--clear-state (root)
+  (remhash root my/preview-markdown--project-states))
 
-(defun my/preview-markdown--project-sentinel (proc _event)
-  (when (and (eq proc my/preview-markdown--project-process)
-             (memq (process-status proc) '(exit signal failed)))
-    (setq my/preview-markdown--project-process nil)
-    (setq my/preview-markdown--project-root nil)))
+(defun my/preview-markdown--state-process (state)
+  (plist-get state :process))
 
-(defun my/preview-markdown--start-single (file)
+(defun my/preview-markdown--state-port (state)
+  (plist-get state :port))
+
+(defun my/preview-markdown--state-file (state)
+  (plist-get state :file))
+
+(defun my/preview-markdown--state-live-p (state)
+  (my/preview-markdown--process-live-p
+   (my/preview-markdown--state-process state)))
+
+(defun my/preview-markdown--used-ports ()
+  (let (ports)
+    (maphash
+     (lambda (_root state)
+       (when-let ((port (my/preview-markdown--state-port state)))
+         (push port ports)))
+     my/preview-markdown--project-states)
+    ports))
+
+(defun my/preview-markdown--next-port ()
+  (let ((port my/preview-markdown-port)
+        (used-ports (my/preview-markdown--used-ports)))
+    (while (member port used-ports)
+      (setq port (1+ port)))
+    port))
+
+(defun my/preview-markdown--process-output-tail (process)
+  (when-let ((buffer (and process (process-buffer process))))
+    (with-current-buffer buffer
+      (string-trim
+       (buffer-substring-no-properties
+        (max (point-min) (- (point-max) 400))
+        (point-max))))))
+
+(defun my/preview-markdown--ensure-process-running (process label)
+  (accept-process-output process my/preview-markdown-startup-delay)
+  (unless (my/preview-markdown--process-live-p process)
+    (let ((details (my/preview-markdown--process-output-tail process)))
+      (my/preview-markdown--log
+       "%s failed to start%s"
+       label
+       (if (string-empty-p details)
+           ""
+         (format ": %s" details)))
+      (user-error
+       "%s failed to start%s"
+       label
+       (if (string-empty-p details)
+           ""
+         (format ": %s" details))))))
+
+(defun my/preview-markdown--stop-root (root)
+  (when-let ((state (my/preview-markdown--state root)))
+    (when (my/preview-markdown--state-live-p state)
+      (my/preview-markdown--log
+       "stop root=%s file=%s port=%s"
+       root
+       (my/preview-markdown--state-file state)
+       (my/preview-markdown--state-port state))
+      (delete-process (my/preview-markdown--state-process state)))
+    (my/preview-markdown--clear-state root)))
+
+(defun my/preview-markdown--stop-all ()
+  (let (roots)
+    (maphash
+     (lambda (root _state)
+       (push root roots))
+     my/preview-markdown--project-states)
+    (dolist (root roots)
+      (my/preview-markdown--stop-root root))))
+
+(defun my/preview-markdown--sentinel (root proc _event)
+  (let ((state (my/preview-markdown--state root)))
+    (when (and state
+               (eq proc (my/preview-markdown--state-process state))
+               (memq (process-status proc) '(exit signal failed)))
+      (my/preview-markdown--log
+       "exited root=%s status=%s details=%s"
+       root
+       (process-status proc)
+       (or (my/preview-markdown--process-output-tail proc) ""))
+      (my/preview-markdown--clear-state root))))
+
+(defun my/preview-markdown--ensure-root-process (root file &optional source)
   (unless (executable-find my/preview-markdown-command)
     (user-error "Could not find executable: %s" my/preview-markdown-command))
-  (let* ((root (my/preview-markdown--normalize-root
-                (file-name-directory (expand-file-name file))))
-         (relative (file-name-nondirectory file)))
-    (unless (and (my/preview-markdown--process-live-p my/preview-markdown--single-process)
-                 (string= root my/preview-markdown--single-root))
-      (my/preview-markdown--stop-single)
+  (let* ((state (my/preview-markdown--state root))
+         (relative (my/preview-markdown--relative-file file root))
+         (port (or (my/preview-markdown--state-port state)
+                   (my/preview-markdown--next-port)))
+         process)
+    (if (my/preview-markdown--state-live-p state)
+        (progn
+          (setq state (plist-put state :file (expand-file-name file)))
+          (my/preview-markdown--set-state root state)
+          (my/preview-markdown--log
+           "reuse source=%s root=%s file=%s port=%d"
+           (or source "manual")
+           root relative port))
       (let ((default-directory root))
-        (setq my/preview-markdown--single-root root)
-        (setq my/preview-markdown--single-process
+        (setq process
               (make-process
-               :name "my-preview-markdown-single"
-               :buffer "*my-preview-markdown*"
+               :name (format "my-preview-markdown-%d" port)
+               :buffer (format "*my-preview-markdown:%d*" port)
                :command (list my/preview-markdown-command
                               "-b=false"
-                              "-p" (number-to-string my/preview-markdown-port)
+                              "-p" (number-to-string port)
                               relative)
                :noquery t
-               :sentinel #'my/preview-markdown--single-sentinel))
-        (sleep-for my/preview-markdown-startup-delay)))
-    (my/preview-markdown--browse file root)))
+               :sentinel (lambda (proc event)
+                           (my/preview-markdown--sentinel root proc event))))
+        (setq state (list :process process
+                          :port port
+                          :file (expand-file-name file)))
+        (my/preview-markdown--set-state root state)
+        (my/preview-markdown--log
+         "start source=%s root=%s file=%s port=%d"
+         (or source "manual")
+         root relative port)
+        (condition-case err
+            (my/preview-markdown--ensure-process-running process "markdown preview")
+          (error
+           (my/preview-markdown--clear-state root)
+           (signal (car err) (cdr err))))))
+    state))
 
-(defun my/preview-markdown--start-project (file)
-  (unless (executable-find my/preview-markdown-command)
-    (user-error "Could not find executable: %s" my/preview-markdown-command))
-  (let* ((root (my/preview-markdown--project-root-for-file file))
-         (relative (file-relative-name (expand-file-name file) root)))
-    (unless (and (my/preview-markdown--process-live-p my/preview-markdown--project-process)
-                 (string= root my/preview-markdown--project-root))
-      (my/preview-markdown--stop-project)
-      (let ((default-directory root))
-        (setq my/preview-markdown--project-root root)
-        (setq my/preview-markdown--project-process
-              (make-process
-               :name "my-preview-markdown-project"
-               :buffer "*my-preview-markdown-project*"
-               :command (list my/preview-markdown-command
-                              "-b=false"
-                              "-p" (number-to-string my/preview-markdown-port)
-                              relative)
-               :noquery t
-               :sentinel #'my/preview-markdown--project-sentinel))
-        (sleep-for my/preview-markdown-startup-delay)))
-    (my/preview-markdown--browse file root)))
+(defun my/preview-markdown--preview-file (file &optional source)
+  (when-let ((buffer (find-buffer-visiting file)))
+    (with-current-buffer buffer
+      (when (buffer-modified-p)
+        (save-buffer))))
+  (let* ((root (my/preview-markdown--root-for-file file))
+         (state (my/preview-markdown--ensure-root-process root file source))
+         (port (my/preview-markdown--state-port state)))
+    (my/preview-markdown--browse file root port)))
+
+(defun my/preview-markdown--project-enabled-p (file)
+  (when-let ((root (ignore-errors
+                     (my/preview-markdown--project-root-for-file file))))
+    (member root my/preview-markdown--enabled-projects)))
+
+(defun my/preview-markdown--project-root ()
+  (let ((target (or buffer-file-name default-directory)))
+    (my/preview-markdown--project-root-for-file target)))
+
+(defun my/preview-markdown--log-project-state ()
+  (let (entries)
+    (maphash
+     (lambda (root state)
+       (push (format "%s=>%d"
+                     root
+                     (my/preview-markdown--state-port state))
+             entries))
+     my/preview-markdown--project-states)
+    (my/preview-markdown--log
+     "active projects %s"
+     (if entries
+         (mapconcat #'identity (sort entries #'string<) ", ")
+       "<none>"))))
+
+(defun my/preview-markdown--mark-project-mode-active ()
+  (unless my/preview-markdown-project-mode
+    (setq-local my/preview-markdown-project-mode t)
+    (force-mode-line-update)))
 
 (defun my/preview-markdown--mode-line-lighter ()
   (if (and (display-graphic-p)
@@ -555,56 +683,71 @@ Each entry is a directory name like \"app\" or \"frontend\"."
        " "
        (nerd-icons-codicon "nf-cod-markdown")
        )
-    my/preview-markdown-mode-line-text))
+     my/preview-markdown-mode-line-text))
 
-(defun my/preview-markdown--maybe-enable-project-mode ()
-  (when (and buffer-file-name
-             (my/preview-markdown--markdown-file-p buffer-file-name))
-    (let ((root (ignore-errors
-                  (my/preview-markdown--project-root-for-file buffer-file-name))))
-      (when (and root
-                 (member root my/preview-markdown--enabled-projects)
-                 (not my/preview-markdown-project-mode))
-        (my/preview-markdown-project-mode 1)))))
+(defun my/preview-markdown--maybe-preview-buffer (buffer source)
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
+      (when (and buffer-file-name
+                 (my/preview-markdown--markdown-file-p buffer-file-name)
+                 (my/preview-markdown--project-enabled-p buffer-file-name))
+        (my/preview-markdown--log
+         "%s preview file=%s"
+         source
+         buffer-file-name)
+        (my/preview-markdown--mark-project-mode-active)
+        (my/preview-markdown--preview-file buffer-file-name source)))))
+
+(defun my/preview-markdown--maybe-preview-window (object)
+  (let ((window (cond
+                 ((window-live-p object) object)
+                 ((frame-live-p object) (frame-selected-window object)))))
+    (when (and (window-live-p window)
+               (eq window (selected-window)))
+      (my/preview-markdown--maybe-preview-buffer
+       (window-buffer window)
+       "window-buffer"))))
 
 ;;;###autoload
 (defun my/preview-markdown ()
   "Preview only the current Markdown file."
   (interactive)
   (let ((file (my/preview-markdown--current-markdown-file)))
-    (when (buffer-modified-p)
-      (save-buffer))
-    (my/preview-markdown--start-single file)))
+    (my/preview-markdown--preview-file file "manual")))
 
 ;;;###autoload
 (defun my/preview-markdown-stop ()
   "Stop all go-grip processes managed by my-preview-markdown."
   (interactive)
-  (my/preview-markdown--stop-single)
-  (my/preview-markdown--stop-project))
+  (my/preview-markdown--stop-all))
 
 ;;;###autoload
 (define-minor-mode my/preview-markdown-project-mode
   "Enable auto preview for Markdown files in the current project."
   :lighter (:eval (my/preview-markdown--mode-line-lighter))
   (let ((root (ignore-errors
-                (my/preview-markdown--project-root-for-file
-                 (or buffer-file-name default-directory)))))
+                (my/preview-markdown--project-root))))
     (unless root
       (setq my/preview-markdown-project-mode nil)
       (user-error "No project found for current buffer"))
     (if my/preview-markdown-project-mode
         (progn
           (add-to-list 'my/preview-markdown--enabled-projects root)
+          (my/preview-markdown--log "enable project mode root=%s" root)
+          (my/preview-markdown--log-project-state)
           (when (and buffer-file-name
                      (my/preview-markdown--markdown-file-p buffer-file-name))
-            (when (buffer-modified-p)
-              (save-buffer))
-            (my/preview-markdown--start-project buffer-file-name)))
+            (my/preview-markdown--preview-file
+             buffer-file-name
+             "project-mode")))
+      (my/preview-markdown--log "disable project mode root=%s" root)
       (setq my/preview-markdown--enabled-projects
-            (delete root my/preview-markdown--enabled-projects)))))
+            (delete root my/preview-markdown--enabled-projects))
+      (my/preview-markdown--stop-root root)
+      (my/preview-markdown--log-project-state))))
 
-(add-hook 'find-file-hook #'my/preview-markdown--maybe-enable-project-mode)
+(add-hook 'window-buffer-change-functions
+          #'my/preview-markdown--maybe-preview-window)
 
 (provide 'my-preview-markdown)
 
