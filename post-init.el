@@ -257,6 +257,7 @@
   :ensure t
   :straight (nano :type git :host github :repo "rougier/nano-emacs")
   :config
+  (setq recentf-max-menu-items 200)
   ;; neotreeの場合mode lineを非表示
   (add-hook 'neotree-mode-hook
             (lambda ()
@@ -267,15 +268,25 @@
   (setq nano-font-family-monospaced my/font-jp)
   (setq nano-font-family-proportional my/font-jp)
   (setq nano-font-size 12)
+  (set-face-attribute 'nano-face-strong nil
+                      :foreground nano-color-strong
+                      :weight 'light)
   )
 
 (use-package nano-vertico
   :ensure t
   :after (nano vertico)
   :straight (nano-vertico :type git :host github :repo "rougier/nano-vertico")
+  :custom
+  (nano-vertico-symbols '(
+                          (pill-left  . "")
+                          (pill-right . ">>")
+                          (selection  . ">")
+                          (line       . ?-)
+                          ))
   :config
   (nano-vertico-mode 1)
-  ;; nano-verticoと併用する設定
+  ;; vertico-posframe-previewと併用する設定
   ;; nano-vertico は vertico--display-candidates を :override する。
   ;; これが vertico-posframe の表示処理を潰すため外す。
   ;; これにより nano-vertico--format-candidate の見た目調整は残り、
@@ -289,7 +300,7 @@
   :after (vertico nano-vertico)
   :straight (vertico-buffer-frame :type git :host github :repo "kn66/vertico-buffer-frame")
   :custom
-  (vertico-buffer-frame-consult-preview nil)
+  ;; (vertico-buffer-frame-consult-preview nil)
   (vertico-buffer-frame-golden-ratio-scale 1.2)
   :config
   (vertico-buffer-frame-mode)
@@ -311,6 +322,7 @@
 ;; (with-eval-after-load 'nano-vertico
 ;;   (add-hook 'nano-vertico-mode-hook
 ;;             #'my/nano-vertico-disable-display-override))
+
 
 ;; nano-emacsを使う場合不要
 ;; (use-package doom-modeline
@@ -344,22 +356,23 @@
 
 ;; 画面の余白
 (use-package spacious-padding
+  :custom
+  (spacious-padding-widths
+   '( :internal-border-width 15
+      :header-line-width 4
+      :mode-line-width 6
+      :tab-width 4
+      :right-divider-width 30
+      :scroll-bar-width 8))
+  (spacious-padding-subtle-frame-lines
+   '( :mode-line-active default
+      :mode-line-inactive vertical-border))
+
   :config
-  (setq spacious-padding-widths
-        '( :internal-border-width 15
-           :header-line-width 4
-           :mode-line-width 6
-           :tab-width 4
-           :right-divider-width 30
-           :scroll-bar-width 8))
+  ;; init.el を再評価しても、有効化処理を繰り返さない。
+  (unless spacious-padding-mode
+    (spacious-padding-mode 1)))
 
-  ;; Read the doc string of `spacious-padding-subtle-mode-line' as it
-  ;; is very flexible and provides several examples.
-  (setq spacious-padding-subtle-mode-line
-        `( :mode-line-active 'default
-           :mode-line-inactive vertical-border))
-
-  (spacious-padding-mode +1))
 (let ((elapsed (float-time (time-subtract (current-time) start-time))))
   (message "theme: %.3f" elapsed))
 
@@ -757,8 +770,10 @@
   :after (vertico) ; Load after vertico
   :bind
   ("C-s" . consult-line)  ;; バッファ内をキーワードで検索
-  ("C-x b" . consult-buffer)
-  ("C-x 4 b" . consult-buffer-other-window)
+  ;; ("C-x b" . consult-buffer)
+  ;; ("C-x b" . consult-buffer-other-window)
+  ("C-x b" . consult-project-buffer)
+  ;; ("C-x 4 b" . consult-buffer-other-window)
   ;; ("C-r" . consult-ripgrep) ;; ripgrep がインストールされていれば
   ;; ("C-g C-g" . consult-grep) ;; デフォルトの grep コマンドに consult を適用
   ("M-y" . consult-yank-pop) ;; kill-ring の履歴から選択
@@ -814,7 +829,17 @@
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
-                 (window-parameters (mode-line-format . none)))))
+                 (window-parameters (mode-line-format . none))))
+
+  ;; vertico-buffer-frameを使う場合の設定
+  ;; action を minibuffer completion で選ぶ
+  (setq embark-prompter #'embark-completing-read-prompter)
+  ;; *Embark Actions* buffer を自動表示しない
+  (setq embark-indicators
+        '(embark-minimal-indicator
+          embark-highlight-indicator
+          embark-isearch-highlight-indicator))
+  )
 
 (use-package embark-consult
   :ensure t
@@ -989,7 +1014,7 @@
              eglot-format-buffer
              eglot-code-actions
              )
-  :config
+:config
   ;; (with-eval-after-load 'flymake
   ;;   (setq flymake-no-changes-timeout 0.5
   ;;         flymake-start-on-save-buffer t
@@ -1258,6 +1283,11 @@
 ;;   )
 ;; (add-hook 'window-selection-change-functions #'my/after-jump-window)
 
+(use-package better-jumper
+  :straight (better-jumper :type git :host nil :repo "https://github.com/gilbertw1/better-jumper.git" :tag "master")
+  :config
+  (better-jumper-mode +1)
+  )
 ;;; ----- window ----------------------------------------
 
 
@@ -1328,6 +1358,11 @@
        (setq ns-command-modifier (quote meta))
  (setq ns-alternate-modifier (quote super))
  )
+
+(if (string-match "ac297.local" (system-name))
+       (setq ns-command-modifier (quote meta))
+ (setq ns-alternate-modifier (quote super))
+)
 
 ;;reload
 ;; use-packageの場合、M-x eval-defunを使う
@@ -1646,6 +1681,34 @@
 
 
 
+;; rustをinstallしておいて、wasm-pack, justをinstall
+;; git clone --recurse-submodules https://github.com/nohzafk/emacs-workspace-hud.git
+;; cd ui && wasm-pack build --target web --release
+;; just setup
+;; just wasm
+;; (add-to-list 'load-path "~/mysrc/emacs-workspace-hud/emacs-egui/lisp")
+;; (use-package workspace-hud
+;;   :straight nil
+;;   :ensure nil
+;;   :load-path "~/mysrc/emacs-workspace-hud/lisp"
+;;   :custom
+;;   (workspace-hud-margin-top 43)
+;;   (workspace-hud-margin-right 50)
+;;   ;; :config
+;;   ;; (workspace-hud-auto-mode)
+;;   )
+;;
+;; ;; git clone https://github.com/nohzafk/agent-shell-hud
+;; (use-package agent-shell-hud
+;;   :ensure nil
+;;   :straight nil
+;;   :load-path "~/mysrc/agent-shell-hud"
+;;   :after (agent-shell workspace-hud)
+;;   ;; :config
+;;   ;; (agent-shell-hud-mode 1)
+;;   )
+
+
 ;;; -------- magit ---------------------------------
 ;; branch list(tag list):  magit-status magit-show-refs
 (setq package-start-time (current-time))
@@ -1871,6 +1934,10 @@
   (setenv "PATH" (concat dotnet-tool-path path-separator (getenv "PATH"))))
 ;;; --------- csharp ------------------------
 
+;;; --------- docker ------------------------
+(add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-ts-mode))
+;;; --------- docker ------------------------
+
 ;;; --------- format ------------------------
 (use-package reformatter
   :ensure t
@@ -1965,29 +2032,27 @@
   ;;(require 'gptel-org)
   (setq
    gptel-default-mode 'org-mode
-   ;; gptel-default-mode 'markdown-mode
-   gptel-model 'gemini-3-flash-preview
-   gptel-backend   (gptel-make-gemini "Gemini"
+   ;; gptel-default-mode 'markdwn-mode
+   ;; gptel-model 'gemini-3-flash-preview
+   gptel-model 'kimi-k2.6:cloud
+   gptel-backend (gptel-make-ollama "ollama-cloud"
+    :host "https://ollama.com"
+    :stream t
+    :key (getenv "OLLAMA_API_KEY")
+    :models '(kimi-k2.6:cloud kimi-k2.5:cloud qwen3.5:cloud)
+    )
+   )
+  (gptel-make-gemini "Gemini"
                      :key (getenv "GEMINI_API_KEY")
                      :stream t
                      :request-params '(:tools [(:google_search ())])
                      )
-   )
   (gptel-make-gh-copilot "Copilot"
     :host "api.business.githubcopilot.com")
-  (setq gptel-model 'claude-haiku-4.5
-        gptel-backend (gptel-make-gh-copilot "Copilot"))
-
   (gptel-make-ollama "ollama-local"
     :host "172.22.1.15:11434"
     :stream t
     :models '(qwen3.5:4b qwen3:8b))
-  (gptel-make-ollama "ollama-cloud"
-    :host "https://ollama.com"
-    :stream t
-    :key (getenv "OLLAMA_API_KEY")
-    :models '(qwen3.5:cloud kimi-k2.5:cloud)
-    )
   (gptel-make-ollama "ollama-nv"
     :host "10.16.1.123:11434"
     :stream t
@@ -2036,7 +2101,8 @@
      ;;                              :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "http://172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false"))
      ;;  )
     ;; ("firecrawl-mcp" . (:command "sh" :args ("-lc" "node" "~/prog/mcp/firecrawl-mcp-server/dist/index.js") :env (:CLOUD_SERVICE "false" :FIRECRAWL_API_KEY "test" :FIRECRAWL_API_URL "172.22.1.15:3002" :HTTP_STREAMABLE_SERVER "false")))
-     ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+     ;; ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+     ("playwright" . (:command "npx" :args ("@playwright/mcp@latest")))
      ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem") :roots (getenv "HOME")))
      ;; ("sequential-thinking" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-sequential-thinking")))
      ("context7" . (:command "npx" :args ("-y" "@upstash/context7-mcp") :env (:DEFAULT_MINIMUM_TOKENS "6000")))
@@ -2080,6 +2146,13 @@
   )
 ;;; -----------------------------------------
 
+(use-package ghostel
+  :straight (:type git :host nil :repo "https://github.com/dakra/ghostel")
+)
+
+
 (minimal-emacs-load-user-init "myconf.el")
 (minimal-emacs-load-user-init "local-conf.el")
+(minimal-emacs-load-user-init "mythemes.el")
+
 ;;; post-init.el ends here
